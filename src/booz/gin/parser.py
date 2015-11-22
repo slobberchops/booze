@@ -18,13 +18,42 @@ class Parser:
 
     def parse(self, input):
         pos = input.tell()
-        result = False
+        result, value = False, None
         try:
-            result = self._parse(input)
+            result, value = self._parse(input)
         finally:
             if not result:
                 input.seek(pos)
-        return result
+        return result, value
 
     def _parse(self, input):
-        return False
+        return False, None
+
+    def __lshift__(self, other):
+        if isinstance(other, Seq):
+            return Seq(self, *other.parsers)
+        else:
+            return Seq(sel, other)
+
+
+class Seq(Parser):
+
+    def __init__(self, *parsers):
+        self.__parsers = tuple(parsers)
+
+    @property
+    def parsers(self):
+        return self.__parsers
+
+    def _parse(self, input):
+        for parser in self.__parsers:
+            result, value = parser.parse(input)
+            if not result:
+                return False, None
+        return True, tuple(value)
+
+    def __lshift__(self, other):
+        if isinstance(other, Seq):
+            return Seq(*(self.parsers + other.parsers))
+        else:
+            return Seq(*(self.parsers + (other,)))

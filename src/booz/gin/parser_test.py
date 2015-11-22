@@ -19,17 +19,20 @@ import unittest
 from booz.gin import parser
 
 
-class ParserCase(unittest.TestCase):
-
-    def setUp(self):
-        self.parser = parser.Parser
+class ParserTestCase(unittest.TestCase):
 
     def test_parse(self):
         p = parser.Parser()
         s = io.StringIO("test")
         s.seek(1)
-        self.assertFalse(p.parse(s))
+        self.assertEqual((False, None), p.parse(s))
         self.assertEqual(1, s.tell())
+
+    def test_lshift(self):
+        p1 = parser.Parser()
+        p2 = parser.Parser()
+        seq = p1 << p2
+        self.assertEqual((p1, p2), seq.parsers)
 
 
 if __name__ == '__main__':
