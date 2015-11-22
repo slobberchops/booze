@@ -33,7 +33,7 @@ class Parser:
         if isinstance(other, Seq):
             return Seq(self, *other.parsers)
         else:
-            return Seq(sel, other)
+            return Seq(self, other)
 
 
 class Seq(Parser):
