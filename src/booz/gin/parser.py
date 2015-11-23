@@ -13,6 +13,9 @@
 # limitations under the License.
 
 
+UNUSED = object()
+
+
 class Parser:
     """Base class for parsers."""
 
@@ -36,6 +39,29 @@ class Parser:
             return Seq(self, other)
 
 
+class Char(Parser):
+
+    def __init__(self, chars=None):
+        self.__chars = None if chars is None else set(chars)
+
+    @property
+    def chars(self):
+        return self.__chars
+
+    def _parse(self, input):
+        c = input.read(1)
+        if c == '':
+            return False, None
+        else:
+            local_chars = self.__chars
+            if local_chars is None:
+                return True, c
+            elif c in local_chars:
+                return True, c
+            else:
+                return False, None
+
+
 class Seq(Parser):
 
     def __init__(self, *parsers):
@@ -46,11 +72,14 @@ class Seq(Parser):
         return self.__parsers
 
     def _parse(self, input):
+        values = []
         for parser in self.__parsers:
             result, value = parser.parse(input)
             if not result:
                 return False, None
-        return True, tuple(value)
+            else:
+                values.append(value)
+        return True, tuple(values)
 
     def __lshift__(self, other):
         if isinstance(other, Seq):
