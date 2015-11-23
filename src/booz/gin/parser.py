@@ -38,6 +38,9 @@ class Parser:
         else:
             return Seq(self, other)
 
+    def __getitem__(self, func):
+        return Action(self, func)
+
 
 class Char(Parser):
 
@@ -86,3 +89,25 @@ class Seq(Parser):
             return Seq(*(self.parsers + other.parsers))
         else:
             return Seq(*(self.parsers + (other,)))
+
+
+class Action(Parser):
+
+    def __init__(self, parser, func):
+        self.__parser = parser
+        self.__func = func
+
+    @property
+    def parser(self):
+        return self.__parser
+
+    @property
+    def func(self):
+        return self.__func
+
+    def _parse(self, input):
+        status, value = self.__parser.parse(input)
+        if status:
+            return True, self.__func(value)
+        else:
+            return False, None

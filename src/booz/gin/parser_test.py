@@ -42,6 +42,13 @@ class ParserTestCase(unittest.TestCase):
 
         self.assertEqual((p1, p2, p3), (p1 << seq).parsers)
 
+    def test_getitem(self):
+        func = lambda v: v + v
+        p1 = parser.Parser()
+        p2 = p1[func]
+        self.assertEqual(p1, p2.parser)
+        self.assertEqual(func, p2.func)
+
 
 class CharTestCase(unittest.TestCase):
 
@@ -110,6 +117,30 @@ class SeqTestCase(unittest.TestCase):
 
         self.assertEqual((p1, p2, p3, p4), (seq1 << seq2).parsers)
 
+
+class ActionTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        p = parser.Action(parser.Char('abc'), lambda v: v + v)
+        s = io.StringIO('b')
+        self.assertEqual((True, 'bb'), p.parse(s))
+        self.assertEqual(1, s.tell())
+
+    def test_parse_fail(self):
+        p = parser.Action(parser.Char('abc'), lambda v: v + v)
+        s = io.StringIO('x')
+        self.assertEqual((False, None), p.parse(s))
+        self.assertEqual(0, s.tell())
+
+    def test_parser(self):
+        p1 = parser.Char('abc')
+        p2 = parser.Action(p1, lambda v: v + v)
+        self.assertEqual(p1, p2.parser)
+
+    def test_func(self):
+        f = lambda v: v + v
+        p2 = parser.Action(parser.Char('abc'), f)
+        self.assertEqual(f, p2.func)
 
 if __name__ == '__main__':
     unittest.main()
