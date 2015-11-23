@@ -47,6 +47,9 @@ class Parser:
     def __getitem__(self, func):
         return Action(self, func)
 
+    def __neg__(self):
+        return Opt(self)
+
 
 class Char(Parser):
 
@@ -116,23 +119,39 @@ class Alt(_AggregateParser):
             return Alt(*(self.parsers + (other,)))
 
 
-class Action(Parser):
+class _Unary(Parser):
 
-    def __init__(self, parser, func):
+    def __init__(self, parser):
         self.__parser = parser
-        self.__func = func
 
     @property
     def parser(self):
         return self.__parser
+
+
+class Action(_Unary):
+
+    def __init__(self, parser, func):
+        super(Action, self).__init__(parser)
+        self.__func = func
 
     @property
     def func(self):
         return self.__func
 
     def _parse(self, input):
-        status, value = self.__parser.parse(input)
+        status, value = self.parser.parse(input)
         if status:
             return True, self.__func(value)
         else:
             return False, None
+
+
+class Opt(_Unary):
+
+    def _parse(self, input):
+        status, value = self.parser.parse(input)
+        if status:
+            return status, value
+        else:
+            return True, UNUSED
