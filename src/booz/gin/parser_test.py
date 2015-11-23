@@ -68,6 +68,13 @@ class ParserTestCase(unittest.TestCase):
         p2 = -p1
         self.assertEqual(p1, p2.parser)
 
+    def test_pos(self):
+        p1 = parser.Parser()
+        p2 = +p1
+        self.assertEqual(p1, p2.parser)
+        self.assertEqual(1, p2.minimum)
+        self.assertIsNone(p2.maximum)
+
 
 class CharTestCase(unittest.TestCase):
 
@@ -218,6 +225,70 @@ class OptTestCase(unittest.TestCase):
         p1 = parser.Char('abc')
         p2 = parser.Opt(p1)
         self.assertEqual(p1, p2.parser)
+
+
+class RepeatUnitTest(unittest.TestCase):
+
+    def test_parse_zero_or_more(self):
+        p = parser.Repeat(parser.Char('abc'))
+        s = io.StringIO('abcabcdef')
+        self.assertEqual((True, tuple('abcabc')), p.parse(s))
+        self.assertEqual(6, s.tell())
+        self.assertEqual((True, ()), p.parse(s))
+        self.assertEqual(6, s.tell())
+
+    def test_parse_minimum(self):
+        p = parser.Repeat(parser.Char('abc'), 2)
+        s = io.StringIO('abcdef')
+        self.assertEqual((True, tuple('abc')), p.parse(s))
+        self.assertEqual(3, s.tell())
+        s.seek(2)
+        self.assertEqual((False, None), p.parse(s))
+        self.assertEqual(2, s.tell())
+
+    def test_parse_maximum(self):
+        p = parser.Repeat(parser.Char('abc'), 0, 2)
+        s = io.StringIO('abcdef')
+        self.assertEqual((True, tuple('ab')), p.parse(s))
+        self.assertEqual(2, s.tell())
+
+    def test_parser(self):
+        p1 = parser.Parser()
+        p2 = parser.Repeat(p1)
+        self.assertEqual(p1, p2.parser)
+
+    def test_minimum(self):
+        p = parser.Repeat(parser.Parser(), 10, 20)
+        self.assertEqual(20, p.minimum)
+
+    def test_maximum_default(self):
+        p = parser.Repeat(parser.Parser(), 10)
+        self.assertIsNone(p.maximum)
+
+    def test_minimum(self):
+        p = parser.Repeat(parser.Parser(), 10, 20)
+        self.assertEqual(10, p.minimum)
+
+    def test_kleene_optimization(self):
+        p1 = parser.Parser()
+        p2 = -+p1
+        self.assertEqual(p1, p2.parser)
+        self.assertEqual(0, p2.minimum)
+        self.assertIsNone(p2.maximum)
+
+    def test_kleene_optimization_with_maximum(self):
+        p1 = parser.Parser()
+        p2 = -parser.Repeat(p1, 1, 20)
+        self.assertEqual(p1, p2.parser)
+        self.assertEqual(0, p2.minimum)
+        self.assertEqual(20, p2.maximum)
+
+    def test_skip_kleene_optimization(self):
+        p1 = parser.Parser()
+        p2 = parser.Repeat(p1, 2)
+        p3 = -p2
+        self.assertEqual(p2, p3.parser)
+        self.assertTrue(isinstance(p3, parser.Opt))
 
 
 if __name__ == '__main__':

@@ -50,6 +50,9 @@ class Parser:
     def __neg__(self):
         return Opt(self)
 
+    def __pos__(self):
+        return Repeat(self, 1)
+
 
 class Char(Parser):
 
@@ -155,3 +158,42 @@ class Opt(_Unary):
             return status, value
         else:
             return True, UNUSED
+
+
+class Repeat(_Unary):
+
+    def __init__(self, parser, minimum=0, maximum=None):
+        super(Repeat, self).__init__(parser)
+        self.__minimum = minimum
+        self.__maximum = maximum
+
+    @property
+    def minimum(self):
+        return self.__minimum
+
+    @property
+    def maximum(self):
+        return self.__maximum
+
+    def _parse(self, input):
+        count = 0
+        values = []
+        while self.__maximum is None or count < self.__maximum:
+            pos = input.tell()
+            result, value = self.parser.parse(input)
+            if result:
+                values.append(value)
+            else:
+                input.seek(pos)
+                break
+            count += 1
+        if count >= self.__minimum:
+            return True, tuple(values)
+        else:
+            return False, None
+
+    def __neg__(self):
+        if self.__minimum == 1:
+            return Repeat(self.parser, 0, self.__maximum)
+        else:
+            return super(Repeat, self).__neg__()
