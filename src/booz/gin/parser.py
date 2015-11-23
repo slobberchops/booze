@@ -38,6 +38,12 @@ class Parser:
         else:
             return Seq(self, other)
 
+    def __or__(self, other):
+        if isinstance(other, Alt):
+            return Alt(self, *other.parsers)
+        else:
+            return Alt(self, other)
+
     def __getitem__(self, func):
         return Action(self, func)
 
@@ -65,7 +71,7 @@ class Char(Parser):
                 return False, None
 
 
-class Seq(Parser):
+class _AggregateParser(Parser):
 
     def __init__(self, *parsers):
         self.__parsers = tuple(parsers)
@@ -74,9 +80,12 @@ class Seq(Parser):
     def parsers(self):
         return self.__parsers
 
+
+class Seq(_AggregateParser):
+
     def _parse(self, input):
         values = []
-        for parser in self.__parsers:
+        for parser in self.parsers:
             result, value = parser.parse(input)
             if not result:
                 return False, None
@@ -89,6 +98,22 @@ class Seq(Parser):
             return Seq(*(self.parsers + other.parsers))
         else:
             return Seq(*(self.parsers + (other,)))
+
+
+class Alt(_AggregateParser):
+
+    def _parse(self, input):
+        for parser in self.parsers:
+            result, value = parser.parse(input)
+            if result:
+                return True, value
+        return False, None
+
+    def __or__(self, other):
+        if isinstance(other, Alt):
+            return Alt(*(self.parsers + other.parsers))
+        else:
+            return Alt(*(self.parsers + (other,)))
 
 
 class Action(Parser):
