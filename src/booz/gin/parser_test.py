@@ -19,6 +19,24 @@ import unittest
 from booz.gin import parser
 
 
+class UnusedTestCase(unittest.TestCase):
+
+    def test_repr(self):
+        self.assertEqual('UNUSED', repr(parser.UNUSED))
+
+
+class TupleToAttributres(unittest.TestCase):
+
+    def test_empty_tuple(self):
+        self.assertEqual(parser.UNUSED, parser.tuple_to_attributes(()))
+
+    def test_unused_values(self):
+        self.assertEqual(parser.UNUSED, parser.tuple_to_attributes((parser.UNUSED, parser.UNUSED)))
+
+    def test_strip_unused(self):
+        self.assertEqual('ok', parser.tuple_to_attributes((parser.UNUSED, 'ok', parser.UNUSED)))
+
+
 class ParserTestCase(unittest.TestCase):
 
     def test_parse(self):
@@ -225,7 +243,7 @@ class RepeatUnitTest(unittest.TestCase):
         s = io.StringIO('abcabcdef')
         self.assertEqual((True, tuple('abcabc')), p.parse(s))
         self.assertEqual(6, s.tell())
-        self.assertEqual((True, ()), p.parse(s))
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
         self.assertEqual(6, s.tell())
 
     def test_parse_minimum(self):

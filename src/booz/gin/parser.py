@@ -13,7 +13,23 @@
 # limitations under the License.
 
 
-UNUSED = object()
+class UNUSED:
+
+    def __repr__(self):
+        return 'UNUSED'
+
+UNUSED = UNUSED()
+
+
+def tuple_to_attributes(tpl):
+    tpl = tuple(v for v in tpl if v != UNUSED)
+    if not tpl:
+        return UNUSED
+    else:
+        if len(tpl) == 1:
+            return tpl[0]
+        else:
+            return tpl
 
 
 class Parser:
@@ -97,7 +113,7 @@ class Seq(_AggregateParser):
                 return False, None
             else:
                 values.append(value)
-        return True, tuple(values)
+        return True, tuple_to_attributes(values)
 
     def __lshift__(self, other):
         if isinstance(other, Seq):
@@ -193,7 +209,7 @@ class Repeat(_Unary):
                 break
             count += 1
         if count >= self.__minimum:
-            return True, tuple(values)
+            return True, tuple_to_attributes(values)
         else:
             return False, None
 
