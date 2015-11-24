@@ -230,7 +230,7 @@ class OptTestCase(unittest.TestCase):
 class RepeatUnitTest(unittest.TestCase):
 
     def test_parse_zero_or_more(self):
-        p = parser.Repeat(parser.Char('abc'))
+        p = parser.Repeat()[parser.Char('abc')]
         s = io.StringIO('abcabcdef')
         self.assertEqual((True, tuple('abcabc')), p.parse(s))
         self.assertEqual(6, s.tell())
@@ -238,7 +238,7 @@ class RepeatUnitTest(unittest.TestCase):
         self.assertEqual(6, s.tell())
 
     def test_parse_minimum(self):
-        p = parser.Repeat(parser.Char('abc'), 2)
+        p = parser.Repeat(2)[parser.Char('abc')]
         s = io.StringIO('abcdef')
         self.assertEqual((True, tuple('abc')), p.parse(s))
         self.assertEqual(3, s.tell())
@@ -247,26 +247,26 @@ class RepeatUnitTest(unittest.TestCase):
         self.assertEqual(2, s.tell())
 
     def test_parse_maximum(self):
-        p = parser.Repeat(parser.Char('abc'), 0, 2)
+        p = parser.Repeat(0, 2)[parser.Char('abc')]
         s = io.StringIO('abcdef')
         self.assertEqual((True, tuple('ab')), p.parse(s))
         self.assertEqual(2, s.tell())
 
     def test_parser(self):
         p1 = parser.Parser()
-        p2 = parser.Repeat(p1)
+        p2 = parser.Repeat()[p1]
         self.assertEqual(p1, p2.parser)
 
     def test_minimum(self):
-        p = parser.Repeat(parser.Parser(), 10, 20)
+        p = parser.Repeat(10, 20)[parser.Parser()]
         self.assertEqual(20, p.minimum)
 
     def test_maximum_default(self):
-        p = parser.Repeat(parser.Parser(), 10)
+        p = parser.Repeat(10)[parser.Parser()]
         self.assertIsNone(p.maximum)
 
     def test_minimum(self):
-        p = parser.Repeat(parser.Parser(), 10, 20)
+        p = parser.Repeat(10, 20)[parser.Parser()]
         self.assertEqual(10, p.minimum)
 
     def test_kleene_optimization(self):
@@ -278,14 +278,14 @@ class RepeatUnitTest(unittest.TestCase):
 
     def test_kleene_optimization_with_maximum(self):
         p1 = parser.Parser()
-        p2 = -parser.Repeat(p1, 1, 20)
+        p2 = -parser.Repeat(1, 20)[p1]
         self.assertEqual(p1, p2.parser)
         self.assertEqual(0, p2.minimum)
         self.assertEqual(20, p2.maximum)
 
     def test_skip_kleene_optimization(self):
         p1 = parser.Parser()
-        p2 = parser.Repeat(p1, 2)
+        p2 = parser.Repeat(2)[p1]
         p3 = -p2
         self.assertEqual(p2, p3.parser)
         self.assertTrue(isinstance(p3, parser.Opt))

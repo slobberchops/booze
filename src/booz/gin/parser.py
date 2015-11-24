@@ -51,7 +51,7 @@ class Parser:
         return Opt(self)
 
     def __pos__(self):
-        return Repeat(self, 1)
+        return Repeat(1)[self]
 
 
 class Char(Parser):
@@ -160,10 +160,25 @@ class Opt(_Unary):
             return True, UNUSED
 
 
+def directive(unary_parser):
+    class Directive:
+
+        __parser_type__ = unary_parser
+
+        def __init__(self, *args, **kwargs):
+            self.__args = args
+            self.__kwargs = kwargs
+
+        def __getitem__(self, parser):
+            return unary_parser(parser, *self.__args, **self.__kwargs)
+    return Directive
+
+
+@directive
 class Repeat(_Unary):
 
     def __init__(self, parser, minimum=0, maximum=None):
-        super(Repeat, self).__init__(parser)
+        super(Repeat.__parser_type__, self).__init__(parser)
         self.__minimum = minimum
         self.__maximum = maximum
 
@@ -194,6 +209,6 @@ class Repeat(_Unary):
 
     def __neg__(self):
         if self.__minimum == 1:
-            return Repeat(self.parser, 0, self.__maximum)
+            return Repeat(0, self.__maximum)[self.parser]
         else:
-            return super(Repeat, self).__neg__()
+            return super(Repeat.__parser_type__, self).__neg__()
