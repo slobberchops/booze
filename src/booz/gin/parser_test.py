@@ -133,6 +133,16 @@ class StringTestCase(unittest.TestCase):
     def test_string(self):
         self.assertEqual('abc', parser.String('abc').string)
 
+
+class AggregateParserTestCase(unittest.TestCase):
+
+    def test_parsers(self):
+        p1 = parser.Parser()
+        p2 = parser.Parser()
+        p3 = parser.Parser()
+        self.assertEqual((p1, p2, p3), parser.AggregateParser(p1, p2, p3).parsers)
+
+
 class SeqTestCase(unittest.TestCase):
 
     def test_parse(self):
@@ -150,12 +160,6 @@ class SeqTestCase(unittest.TestCase):
         s = io.StringIO('xyz')
         self.assertEqual((False, None), p.parse(s))
         self.assertEqual(0, s.tell())
-
-    def test_parsers(self):
-        p1 = parser.Parser()
-        p2 = parser.Parser()
-        seq = parser.Seq(p1, p2)
-        self.assertEqual((p1, p2), seq.parsers)
 
     def test_lshift(self):
         p1 = parser.Parser()
@@ -199,12 +203,6 @@ class AltTestCase(unittest.TestCase):
         s = io.StringIO('x')
         self.assertEqual((False, None), p.parse(s))
         self.assertEqual(0, s.tell())
-
-    def test_parsers(self):
-        p1 = parser.Parser()
-        p2 = parser.Parser()
-        alt = parser.Alt(p1, p2)
-        self.assertEqual((p1, p2), alt.parsers)
 
     def test_or(self):
         p1 = parser.Parser()

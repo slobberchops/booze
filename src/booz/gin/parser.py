@@ -110,7 +110,7 @@ class String(Parser):
             return False, None
 
 
-class _AggregateParser(Parser):
+class AggregateParser(Parser):
 
     def __init__(self, *parsers):
         self.__parsers = tuple(parsers)
@@ -120,7 +120,7 @@ class _AggregateParser(Parser):
         return self.__parsers
 
 
-class Seq(_AggregateParser):
+class Seq(AggregateParser):
 
     def _parse(self, input):
         values = []
@@ -139,7 +139,7 @@ class Seq(_AggregateParser):
             return Seq(*(self.parsers + (other,)))
 
 
-class Alt(_AggregateParser):
+class Alt(AggregateParser):
 
     def _parse(self, input):
         for parser in self.parsers:
