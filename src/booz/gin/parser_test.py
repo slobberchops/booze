@@ -313,5 +313,46 @@ class RepeatUnitTest(unittest.TestCase):
         self.assertTrue(isinstance(p3, parser.Repeat.__parser_type__))
 
 
+class OmitTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        p = parser.omit[parser.Char('a')]
+        s = io.StringIO('a')
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
+
+    def test_parse_fail(self):
+        p = parser.omit[parser.Char('a')]
+        s = io.StringIO('b')
+        self.assertEqual((False, None), p.parse(s))
+
+
+class AsStringTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        p = parser.as_string[parser.Char('a')]
+        s = io.StringIO('a')
+        self.assertEqual((True, 'a'), p.parse(s))
+
+    def test_parse_fail(self):
+        p = parser.as_string[parser.Parser()]
+        s = io.StringIO('a')
+        self.assertEqual((False, None), p.parse(s))
+
+    def test_parse_unused(self):
+        p = parser.as_string[parser.omit[parser.Char('a')]]
+        s = io.StringIO('a')
+        self.assertEqual((True, ''), p.parse(s))
+
+    def test_parse_tuple(self):
+        p = parser.as_string[+parser.Char('a')]
+        s = io.StringIO('aaaa')
+        self.assertEqual((True, 'aaaa'), p.parse(s))
+
+    def test_parse_tuple_recursive(self):
+        p = parser.as_string[+parser.Char('a') << +parser.Char('b')]
+        s = io.StringIO('aaaabbbb')
+        self.assertEqual((True, 'aaaabbbb'), p.parse(s))
+
+
 if __name__ == '__main__':
     unittest.main()

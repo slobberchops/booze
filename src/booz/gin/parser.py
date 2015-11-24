@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from . import util
 
 class UNUSED:
 
@@ -164,6 +165,9 @@ class _Unary(Parser):
     def parser(self):
         return self.__parser
 
+    def _parse(self, input):
+        return self.parser.parse(input)
+
 
 class Action(_Unary):
 
@@ -176,7 +180,7 @@ class Action(_Unary):
         return self.__func
 
     def _parse(self, input):
-        status, value = self.parser.parse(input)
+        status, value = super(Action, self)._parse(input)
         if status:
             return True, self.__func(value)
         else:
@@ -218,8 +222,8 @@ class Repeat(_Unary):
         values = []
         while self.__maximum is None or count < self.__maximum:
             pos = input.tell()
-            result, value = self.parser.parse(input)
-            if result:
+            status, value = super(Repeat.__parser_type__, self)._parse(input)
+            if status:
                 values.append(value)
             else:
                 input.seek(pos)
@@ -235,3 +239,29 @@ class Repeat(_Unary):
             return Repeat(0, self.__maximum)[self.parser]
         else:
             return super(Repeat.__parser_type__, self).__neg__()
+
+
+def _as_string(value):
+    if value is UNUSED:
+        value = ''
+    elif isinstance(value, tuple):
+        value = ''.join(_as_string(v) for v in value)
+    return str(value)
+
+
+@util.singleton
+@directive
+class omit(_Unary):
+
+    def _parse(self, input):
+        status, value = super(omit.__parser_type__, self)._parse(input)
+        return status, UNUSED if status else value
+
+
+@util.singleton
+@directive
+class as_string(_Unary):
+
+    def _parse(self, input):
+        status, value = super(as_string.__parser_type__, self)._parse(input)
+        return status, _as_string(value) if status else value
