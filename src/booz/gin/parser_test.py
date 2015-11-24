@@ -120,6 +120,19 @@ class CharTestCase(unittest.TestCase):
         self.assertEqual(None, parser.Char().chars)
 
 
+class StringTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        p = parser.String('abc')
+        s = io.StringIO('abcdef')
+        self.assertEqual((True, 'abc'), p.parse(s))
+        self.assertEqual(3, s.tell())
+        self.assertEqual((False, None), p.parse(s))
+        self.assertEqual(3, s.tell())
+
+    def test_string(self):
+        self.assertEqual('abc', parser.String('abc').string)
+
 class SeqTestCase(unittest.TestCase):
 
     def test_parse(self):
@@ -266,9 +279,9 @@ class RepeatUnitTest(unittest.TestCase):
         p2 = parser.Repeat()[p1]
         self.assertEqual(p1, p2.parser)
 
-    def test_minimum(self):
+    def test_maximum(self):
         p = parser.Repeat(10, 20)[parser.Parser()]
-        self.assertEqual(20, p.minimum)
+        self.assertEqual(20, p.maximum)
 
     def test_maximum_default(self):
         p = parser.Repeat(10)[parser.Parser()]

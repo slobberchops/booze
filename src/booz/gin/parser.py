@@ -93,6 +93,23 @@ class Char(Parser):
                 return False, None
 
 
+class String(Parser):
+
+    def __init__(self, string):
+        self.__string = string
+
+    @property
+    def string(self):
+        return self.__string
+
+    def _parse(self, input):
+        string = input.read(len(self.__string))
+        if string == self.__string:
+            return True, string
+        else:
+            return False, None
+
+
 class _AggregateParser(Parser):
 
     def __init__(self, *parsers):
