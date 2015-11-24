@@ -143,6 +143,13 @@ class SeqTestCase(unittest.TestCase):
 
         self.assertEqual((p1, p2, p3, p4), (seq1 << seq2).parsers)
 
+    def test_neg(self):
+        p1 = parser.Parser()
+        p2 = -p1
+        self.assertEqual(p1, p2.parser)
+        self.assertEqual(0, p2.minimum)
+        self.assertEqual(1, p2.maximum)
+
 
 class AltTestCase(unittest.TestCase):
 
@@ -211,22 +218,6 @@ class ActionTestCase(unittest.TestCase):
         self.assertEqual(f, p2.func)
 
 
-class OptTestCase(unittest.TestCase):
-
-    def test_parse(self):
-        p = parser.Opt(parser.Char('a'))
-        s = io.StringIO('ab')
-        self.assertEqual((True, 'a'), p.parse(s))
-        self.assertEqual(1, s.tell())
-        self.assertEqual((True, parser.UNUSED), p.parse(s))
-        self.assertEqual(1, s.tell())
-
-    def test_parser(self):
-        p1 = parser.Char('abc')
-        p2 = parser.Opt(p1)
-        self.assertEqual(p1, p2.parser)
-
-
 class RepeatUnitTest(unittest.TestCase):
 
     def test_parse_zero_or_more(self):
@@ -288,7 +279,9 @@ class RepeatUnitTest(unittest.TestCase):
         p2 = parser.Repeat(2)[p1]
         p3 = -p2
         self.assertEqual(p2, p3.parser)
-        self.assertTrue(isinstance(p3, parser.Opt))
+        self.assertEqual(0, p3.minimum)
+        self.assertEqual(1, p3.maximum)
+        self.assertTrue(isinstance(p3, parser.Repeat.__parser_type__))
 
 
 if __name__ == '__main__':

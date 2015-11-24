@@ -48,7 +48,7 @@ class Parser:
         return Action(self, func)
 
     def __neg__(self):
-        return Opt(self)
+        return Repeat(0, 1)[self]
 
     def __pos__(self):
         return Repeat(1)[self]
@@ -148,16 +148,6 @@ class Action(_Unary):
             return True, self.__func(value)
         else:
             return False, None
-
-
-class Opt(_Unary):
-
-    def _parse(self, input):
-        status, value = self.parser.parse(input)
-        if status:
-            return status, value
-        else:
-            return True, UNUSED
 
 
 def directive(unary_parser):
