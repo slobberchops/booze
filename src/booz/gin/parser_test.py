@@ -37,6 +37,66 @@ class TupleToAttributres(unittest.TestCase):
         self.assertEqual('ok', parser.tuple_to_attributes((parser.UNUSED, 'ok', parser.UNUSED)))
 
 
+class ParserStateTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.input = io.StringIO('abc')
+        self.state = parser.ParserState(self.input)
+
+    def test_initial_state(self):
+        self.assertFalse(self.state.committed)
+        self.assertFalse(self.state.successful)
+        self.assertEqual(parser.UNUSED, self.state.value)
+
+    def test_read_and_rollback(self):
+        with self.state:
+            self.assertEqual('a', self.state.read(1))
+            self.assertEqual(1, self.input.tell())
+            self.assertEqual('b', self.state.read(1))
+            self.assertEqual('c', self.state.read(1))
+            self.assertEqual(3, self.input.tell())
+            self.assertEqual('', self.state.read(1))
+            self.assertFalse(self.state.committed)
+            self.assertFalse(self.state.successful)
+        self.assertEqual(0, self.input.tell())
+        self.assertEqual(parser.UNUSED, self.state.value)
+
+    def test_read_and_commit(self):
+        with self.state:
+            self.assertEqual('a', self.state.read(1))
+            self.assertEqual(1, self.input.tell())
+            self.assertEqual('b', self.state.read(1))
+            self.assertEqual('c', self.state.read(1))
+            self.assertEqual(3, self.input.tell())
+            self.assertEqual('', self.state.read(1))
+            self.assertFalse(self.state.committed)
+            self.assertFalse(self.state.successful)
+            self.state.commit('a value')
+            self.assertTrue(self.state.committed)
+            self.assertTrue(self.state.successful)
+        self.assertEqual(3, self.input.tell())
+        self.assertEqual('a value', self.state.value)
+
+    def test_commit(self):
+        self.state.commit('a value')
+        self.assertTrue(self.state.committed)
+        self.assertTrue(self.state.successful)
+        self.assertEqual('a value', self.state.value)
+
+    def test_set_value(self):
+        self.state.value = 'a value'
+        self.assertFalse(self.state.committed)
+        self.assertTrue(self.state.successful)
+        self.assertEqual('a value', self.state.value)
+
+    def test_rollback(self):
+        self.state.commit('a value')
+        self.state.rollback()
+        self.assertFalse(self.state.committed)
+        self.assertFalse(self.state.successful)
+        self.assertEqual(parser.UNUSED, self.state.value)
+
+
 class ParserTestCase(unittest.TestCase):
 
     def test_parse(self):

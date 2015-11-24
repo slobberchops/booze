@@ -33,21 +33,65 @@ def tuple_to_attributes(tpl):
             return tpl
 
 
+class ParserState:
+
+    def __init__(self, input):
+        if isinstance(input, ParserState):
+            input = input.__input
+        self.__input = input
+        self.__pos = self.__input.tell()
+        self.__commit = False
+        self.__success = False
+        self.__value = UNUSED
+
+    @property
+    def committed(self):
+        return self.__commit
+
+    @property
+    def successful(self):
+        return self.__success
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
+        self.__value = value
+        self.__success = True
+
+    def read(self, *args, **kwargs):
+        return self.__input.read(*args, **kwargs)
+
+    def commit(self, value):
+        self.value = value
+        self.__commit = True
+
+    def rollback(self):
+        self.__commit = False
+        self.__success = False
+        self.__value = UNUSED
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if not self.committed:
+            self.__input.seek(self.__pos)
+        return False
+
+
 class Parser:
     """Base class for parsers."""
 
     def parse(self, input):
-        pos = input.tell()
-        result, value = False, None
-        try:
-            result, value = self._parse(input)
-        finally:
-            if not result:
-                input.seek(pos)
-        return result, value
+        with ParserState(input) as state:
+            self._parse(state)
+            return state.successful, state.value if state.successful else None
 
-    def _parse(self, input):
-        return False, None
+    def _parse(self, state):
+        pass
 
     def __lshift__(self, other):
         if isinstance(other, Seq):
@@ -80,18 +124,12 @@ class Char(Parser):
     def chars(self):
         return self.__chars
 
-    def _parse(self, input):
-        c = input.read(1)
-        if c == '':
-            return False, None
-        else:
+    def _parse(self, state):
+        c = state.read(1)
+        if c != '':
             local_chars = self.__chars
-            if local_chars is None:
-                return True, c
-            elif c in local_chars:
-                return True, c
-            else:
-                return False, None
+            if local_chars is None or c in local_chars:
+                state.commit(c)
 
 
 class String(Parser):
@@ -103,12 +141,10 @@ class String(Parser):
     def string(self):
         return self.__string
 
-    def _parse(self, input):
-        string = input.read(len(self.__string))
+    def _parse(self, state):
+        string = state.read(len(self.__string))
         if string == self.__string:
-            return True, string
-        else:
-            return False, None
+            state.commit(string)
 
 
 class AggregateParser(Parser):
@@ -123,15 +159,15 @@ class AggregateParser(Parser):
 
 class Seq(AggregateParser):
 
-    def _parse(self, input):
+    def _parse(self, state):
         values = []
         for parser in self.parsers:
-            result, value = parser.parse(input)
+            result, value = parser.parse(state)
             if not result:
-                return False, None
+                return
             else:
                 values.append(value)
-        return True, tuple_to_attributes(values)
+        state.commit(tuple_to_attributes(values))
 
     def __lshift__(self, other):
         if isinstance(other, Seq):
@@ -142,12 +178,11 @@ class Seq(AggregateParser):
 
 class Alt(AggregateParser):
 
-    def _parse(self, input):
+    def _parse(self, state):
         for parser in self.parsers:
-            result, value = parser.parse(input)
+            result, value = parser.parse(state)
             if result:
-                return True, value
-        return False, None
+                state.commit(value)
 
     def __or__(self, other):
         if isinstance(other, Alt):
@@ -165,8 +200,8 @@ class _Unary(Parser):
     def parser(self):
         return self.__parser
 
-    def _parse(self, input):
-        return self.parser.parse(input)
+    def _parse(self, state):
+        self.parser._parse(state)
 
 
 class Action(_Unary):
@@ -179,15 +214,13 @@ class Action(_Unary):
     def func(self):
         return self.__func
 
-    def _parse(self, input):
-        status, value = super(Action, self)._parse(input)
-        if status:
-            return True, self.__func(value)
-        else:
-            return False, None
+    def _parse(self, state):
+        super(Action, self)._parse(state)
+        if state.successful:
+            state.value = self.__func(state.value)
 
 
-def directive(unary_parser):
+def directive_class(unary_parser):
     class Directive:
 
         __parser_type__ = unary_parser
@@ -201,7 +234,7 @@ def directive(unary_parser):
     return Directive
 
 
-@directive
+@directive_class
 class Repeat(_Unary):
 
     def __init__(self, parser, minimum=0, maximum=None):
@@ -217,28 +250,35 @@ class Repeat(_Unary):
     def maximum(self):
         return self.__maximum
 
-    def _parse(self, input):
+    def _parse(self, state):
         count = 0
         values = []
         while self.__maximum is None or count < self.__maximum:
-            pos = input.tell()
-            status, value = super(Repeat.__parser_type__, self)._parse(input)
-            if status:
-                values.append(value)
-            else:
-                input.seek(pos)
-                break
+            with ParserState(state) as next_state:
+                super(Repeat.__parser_type__, self)._parse(next_state)
+                if next_state.successful:
+                    values.append(next_state.value)
+                else:
+                    break
             count += 1
         if count >= self.__minimum:
-            return True, tuple_to_attributes(values)
-        else:
-            return False, None
+            state.commit(tuple_to_attributes(values))
 
     def __neg__(self):
         if self.__minimum == 1:
             return Repeat(0, self.__maximum)[self.parser]
         else:
             return super(Repeat.__parser_type__, self).__neg__()
+
+
+@util.singleton
+@directive_class
+class omit(_Unary):
+
+    def _parse(self, state):
+        super(omit.__parser_type__, self)._parse(state)
+        if state.successful:
+            state.value = UNUSED
 
 
 def _as_string(value):
@@ -250,18 +290,10 @@ def _as_string(value):
 
 
 @util.singleton
-@directive
-class omit(_Unary):
-
-    def _parse(self, input):
-        status, value = super(omit.__parser_type__, self)._parse(input)
-        return status, UNUSED if status else value
-
-
-@util.singleton
-@directive
+@directive_class
 class as_string(_Unary):
 
-    def _parse(self, input):
-        status, value = super(as_string.__parser_type__, self)._parse(input)
-        return status, _as_string(value) if status else value
+    def _parse(self, state):
+        super(as_string.__parser_type__, self)._parse(state)
+        if state.successful:
+            state.value = _as_string(state.value)
