@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
+
 from . import util
 
 class UNUSED:
@@ -191,7 +193,7 @@ class Alt(AggregateParser):
             return Alt(*(self.parsers + (other,)))
 
 
-class _Unary(Parser):
+class Unary(Parser):
 
     def __init__(self, parser):
         self.__parser = parser
@@ -204,7 +206,7 @@ class _Unary(Parser):
         self.parser._parse(state)
 
 
-class Action(_Unary):
+class Action(Unary):
 
     def __init__(self, parser, func):
         super(Action, self).__init__(parser)
@@ -234,8 +236,55 @@ def directive_class(unary_parser):
     return Directive
 
 
+class DirectiveParser(Unary):
+
+    def _direct(self, state):
+        raise NotImplementedError
+
+    def _parse(self, state):
+        with self._direct(state):
+            super(DirectiveParser, self)._parse(state)
+
+
+class FuncDirectiveParser(DirectiveParser):
+
+    def __init__(self, parser, func):
+        super(FuncDirectiveParser, self).__init__(parser)
+        self.__func = func
+
+    @property
+    def func(self):
+        return self.__func
+
+    def _direct(self, state):
+        return self.func(state)
+
+
+class FuncDirective:
+
+    def __init__(self, func):
+        self.__func = func
+
+    @property
+    def func(self):
+        return self.__func
+
+    def __getitem__(self, parser):
+        return FuncDirectiveParser(parser, self.__func)
+
+
+def post_directive(post_func):
+    @FuncDirective
+    @contextlib.contextmanager
+    def directive(state):
+        yield
+        if state.successful:
+            post_func(state)
+    return directive
+
+
 @directive_class
-class Repeat(_Unary):
+class Repeat(Unary):
 
     def __init__(self, parser, minimum=0, maximum=None):
         super(Repeat.__parser_type__, self).__init__(parser)
@@ -271,14 +320,9 @@ class Repeat(_Unary):
             return super(Repeat.__parser_type__, self).__neg__()
 
 
-@util.singleton
-@directive_class
-class omit(_Unary):
-
-    def _parse(self, state):
-        super(omit.__parser_type__, self)._parse(state)
-        if state.successful:
-            state.value = UNUSED
+@post_directive
+def omit(state):
+    state.value = UNUSED
 
 
 def _as_string(value):
@@ -289,11 +333,6 @@ def _as_string(value):
     return str(value)
 
 
-@util.singleton
-@directive_class
-class as_string(_Unary):
-
-    def _parse(self, state):
-        super(as_string.__parser_type__, self)._parse(state)
-        if state.successful:
-            state.value = _as_string(state.value)
+@post_directive
+def as_string(state):
+    state.value = _as_string(state.value)

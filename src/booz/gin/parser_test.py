@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
 import io
 
 import unittest
@@ -282,6 +283,19 @@ class AltTestCase(unittest.TestCase):
         self.assertEqual((p1, p2, p3, p4), (alt1 | alt2).parsers)
 
 
+class UnaryTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        p = parser.Unary(parser.Char('a'))
+        s = io.StringIO('aa')
+        self.assertEqual((True, 'a'), p.parse(s))
+
+    def test_parser(self):
+        p1 = parser.Parser()
+        p2 = parser.Unary(p1)
+        self.assertIs(p1, p2.parser)
+
+
 class ActionTestCase(unittest.TestCase):
 
     def test_parse(self):
@@ -305,6 +319,131 @@ class ActionTestCase(unittest.TestCase):
         f = lambda v: v + v
         p2 = parser.Action(parser.Char('abc'), f)
         self.assertEqual(f, p2.func)
+
+
+class DirectiveParserTest(unittest.TestCase):
+
+    class Directive(parser.DirectiveParser):
+
+        state = None
+        pre = False
+        post = False
+
+        @contextlib.contextmanager
+        def _direct(self, state):
+            self.state = state
+            yield
+            self.post = True
+
+    def test_parse_default(self):
+        p = parser.DirectiveParser(parser.Char('a'))
+        s = io.StringIO('abc')
+        with self.assertRaises(NotImplementedError):
+            p.parse(s)
+
+    def test_parse(self):
+        p = self.Directive(parser.Char('a'))
+        s = io.StringIO('abc')
+        self.assertEqual((True, 'a'), p.parse(s))
+        self.assertIsInstance(p.state, parser.ParserState)
+        self.assertTrue(p.post)
+
+    def test_parse(self):
+        p = self.Directive(parser.Char('a'))
+        s = io.StringIO('xyz')
+        self.assertEqual((False, None), p.parse(s))
+        self.assertIsInstance(p.state, parser.ParserState)
+        self.assertTrue(p.post)
+
+
+class FuncDirectiveParserTestCase(unittest.TestCase):
+
+    @contextlib.contextmanager
+    def func(self, state):
+        self.state = state
+        yield
+        self.post = True
+
+    def setUp(self):
+        self.state = None
+        self.post = False
+        self.parser = parser.FuncDirectiveParser(parser.Char('a'), self.func)
+
+    def test_parse(self):
+        s = io.StringIO('abc')
+        self.assertEqual((True, 'a'), self.parser.parse(s))
+        self.assertIsInstance(self.state, parser.ParserState)
+        self.assertTrue(self.post)
+
+    def test_parse_fail(self):
+        s = io.StringIO('xyz')
+        self.assertEqual((False, None), self.parser.parse(s))
+        self.assertIsInstance(self.state, parser.ParserState)
+        self.assertTrue(self.post)
+
+    def test_func(self):
+        self.assertEqual(self.func, self.parser.func)
+
+
+class FuncDirectiveTestCase(unittest.TestCase):
+
+    @contextlib.contextmanager
+    def func(self, state):
+        self.state = state
+        yield
+        self.post = True
+
+    def setUp(self):
+        self.state = None
+        self.post = None
+        self.func_directive = parser.FuncDirective(self.func)
+        self.parser = self.func_directive[parser.Char('a')]
+
+    def test_parse(self):
+        s = io.StringIO('abc')
+        self.assertEqual((True, 'a'), self.parser.parse(s))
+        self.assertTrue(self.post)
+
+    def test_parse_faile(self):
+        s = io.StringIO('xyz')
+        self.assertEqual((False, None), self.parser.parse(s))
+        self.assertTrue(self.post)
+
+    def test_func(self):
+        self.assertEqual(self.func_directive.func, self.func)
+
+
+class PostDirectiveTestCase(unittest.TestCase):
+
+    def post_func(self, state):
+        self.state = state
+        self.committed = state.committed
+        self.successful = state.successful
+        self.value = state.value
+
+    def setUp(self):
+        self.state = None
+        self.committed = None
+        self.successful = None
+        self.value = None
+        self.directive = parser.post_directive(self.post_func)
+        self.parser = self.directive[parser.Char('a')]
+
+    def test_parse(self):
+        s = io.StringIO('abc')
+        self.assertEqual((True, 'a'), self.parser.parse(s))
+        self.assertIsInstance(self.state, parser.ParserState)
+        self.assertTrue(self.committed)
+        self.assertTrue(self.successful)
+        self.assertEqual('a', self.value)
+
+    def test_parse_fail(self):
+        s = io.StringIO('xyz')
+        self.assertEqual((False, None), self.parser.parse(s))
+        self.assertIsNone(self.state)
+        self.assertIsNone(self.committed)
+        self.assertIsNone(self.successful)
+        self.assertIsNone(self.value)
 
 
 class RepeatUnitTest(unittest.TestCase):
