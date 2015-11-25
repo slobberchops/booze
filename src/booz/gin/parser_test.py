@@ -102,6 +102,14 @@ class ParserStateTestCase(unittest.TestCase):
             self.assertTrue(self.state.successful)
             self.assertEqual('a value', self.state.value)
 
+    def test_uncommit(self):
+        with self.state:
+            self.state.commit('a value')
+            self.state.uncommit()
+            self.assertFalse(self.state.committed)
+            self.assertTrue(self.state.successful)
+            self.assertEqual('a value', self.state.value)
+
     def test_set_value(self):
         with self.state:
             self.state.value = 'a value'
@@ -853,6 +861,24 @@ class RuleTestCase(unittest.TestCase):
         p = parser.lit('a')
         with self.assertRaises(ValueError):
             r %= p
+
+
+class PredicateTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        p = parser.predicate[parser.Char('a')]
+        s = io.StringIO('abcd')
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
+        self.assertEqual(0, s.tell())
+
+    def test_parse_fail(self):
+        p = parser.predicate[parser.Char('b')]
+        s = io.StringIO('abcd')
+        self.assertEqual((False, None), p.parse(s))
+        self.assertEqual(0, s.tell())
+
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.UNUSED, parser.predicate[parser.Char('a')].attr_type)
 
 
 if __name__ == '__main__':

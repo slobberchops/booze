@@ -103,6 +103,9 @@ class ParserState:
         self._tx.success = False
         del self._tx.value
 
+    def uncommit(self):
+        self._tx.commit = False
+
     def __enter__(self):
         pos = self.__input.tell()
         self.__txs.append(self.__Tx(pos))
@@ -546,3 +549,11 @@ class Rule(Parser):
     def __imod__(self, other):
         self.parser = other
         return self
+
+
+@post_directive(AttrType.UNUSED)
+def predicate(state):
+    state.value = UNUSED
+    state.uncommit()
+
+
