@@ -679,5 +679,29 @@ class LexemeTestCase(unittest.TestCase):
         self.assertEqual((True, 'tag'), self.parser.parse(' <tag>', ' '))
 
 
+class RuleTestCase(unittest.TestCase):
+
+    def test_default_state(self):
+        r = parser.Rule()
+        with self.assertRaises(AttributeError):
+            r.parse('')
+
+    def test_parse(self):
+        r = parser.Rule()
+        r %= 'hello'
+        self.assertEqual((True, parser.UNUSED), r.parse('hello'))
+
+    def test_set_parser(self):
+        p = parser.Parser()
+        r = parser.Rule()
+        r.parser = p
+        self.assertEqual(p, r.parser)
+
+    def test_set_bad_parser(self):
+        r = parser.Rule()
+        with self.assertRaises(TypeError):
+            r.parser = object()
+
+
 if __name__ == '__main__':
     unittest.main()

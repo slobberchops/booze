@@ -420,3 +420,21 @@ class lexeme:
 
     def __getitem__(self, parser):
         return as_string[object_lexeme[parser]]
+
+
+class Rule(Parser):
+
+    @property
+    def parser(self):
+        return self.__parser
+
+    @parser.setter
+    def parser(self, parser):
+        self.__parser = as_parser(parser)
+
+    def _parse(self, state):
+        return self.__parser._parse(state)
+
+    def __imod__(self, other):
+        self.parser = other
+        return self
