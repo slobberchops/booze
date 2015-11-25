@@ -35,6 +35,15 @@ def tuple_to_attributes(tpl):
             return tpl
 
 
+def as_parser(value):
+    if isinstance(value, str):
+        return lit(value)
+    elif isinstance(value, Parser):
+        return value
+    else:
+        raise TypeError('Unexpected parser type: {}'.format(type(value)))
+
+
 class ParserState:
 
     class __Tx:
@@ -114,11 +123,17 @@ class Parser:
         else:
             return Seq(self, other)
 
+    def __rlshift__(self, other):
+        return as_parser(other) << self
+
     def __or__(self, other):
         if isinstance(other, Alt):
             return Alt(self, *other.parsers)
         else:
             return Alt(self, other)
+
+    def __ror__(self, other):
+        return as_parser(other) | self
 
     def __getitem__(self, func):
         return Action(self, func)
@@ -165,7 +180,7 @@ class String(Parser):
 class AggregateParser(Parser):
 
     def __init__(self, *parsers):
-        self.__parsers = tuple(parsers)
+        self.__parsers = tuple(as_parser(p) for p in parsers)
 
     @property
     def parsers(self):
@@ -350,3 +365,7 @@ def _as_string(value):
 @post_directive
 def as_string(state):
     state.value = _as_string(state.value)
+
+
+def lit(string):
+    return omit[String(string)]

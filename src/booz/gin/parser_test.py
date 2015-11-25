@@ -38,6 +38,23 @@ class TupleToAttributres(unittest.TestCase):
         self.assertEqual('ok', parser.tuple_to_attributes((parser.UNUSED, 'ok', parser.UNUSED)))
 
 
+class AsParserTestCase(unittest.TestCase):
+
+    def test_parser(self):
+        p = parser.as_parser(parser.Char('a'))
+        s = io.StringIO('a')
+        self.assertEqual((True, 'a'), p.parse(s))
+
+    def test_string(self):
+        p = parser.as_parser('parser')
+        s = io.StringIO('parser')
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
+
+    def test_non_parser(self):
+        with self.assertRaises(TypeError):
+            parser.as_parser(object())
+
+
 class ParserStateTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -129,6 +146,16 @@ class ParserTestCase(unittest.TestCase):
 
         self.assertEqual((p1, p2, p3), (p1 << seq).parsers)
 
+    def test_lshift_string(self):
+        s = io.StringIO('abc')
+        self.assertEqual((True, 'a'), (parser.Char('a') << 'b').parse(s))
+        self.assertEqual('c', s.read())
+
+    def test_rlshift_string(self):
+        s = io.StringIO('abc')
+        self.assertEqual((True, 'b'), ('a' << parser.Char('b')).parse(s))
+        self.assertEqual('c', s.read())
+
     def test_or(self):
         p1 = parser.Parser()
         p2 = parser.Parser()
@@ -142,6 +169,18 @@ class ParserTestCase(unittest.TestCase):
         alt = parser.Alt(p2, p3)
 
         self.assertEqual((p1, p2, p3), (p1 | alt).parsers)
+
+    def test_or_string(self):
+        p = parser.Char('a') | 'b'
+        s = io.StringIO('ab')
+        self.assertEqual((True, 'a'), p.parse(s))
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
+
+    def test_ror_string(self):
+        p = 'a' | parser.Char('b')
+        s = io.StringIO('ab')
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
+        self.assertEqual((True, 'b'), p.parse(s))
 
     def test_getitem(self):
         func = lambda v: v + v
@@ -254,6 +293,11 @@ class SeqTestCase(unittest.TestCase):
         self.assertEqual(0, p2.minimum)
         self.assertEqual(1, p2.maximum)
 
+    def test_non_parser(self):
+        seq = parser.Seq('hello')
+        s = io.StringIO('hello')
+        self.assertEqual((True, parser.UNUSED), seq.parse(s))
+
 
 class AltTestCase(unittest.TestCase):
 
@@ -289,6 +333,11 @@ class AltTestCase(unittest.TestCase):
         alt2 = parser.Alt(p3, p4)
 
         self.assertEqual((p1, p2, p3, p4), (alt1 | alt2).parsers)
+
+    def test_non_parser(self):
+        alt = parser.Alt('hello')
+        s = io.StringIO('hello')
+        self.assertEqual((True, parser.UNUSED), alt.parse(s))
 
 
 class UnaryTestCase(unittest.TestCase):
@@ -559,6 +608,19 @@ class AsStringTestCase(unittest.TestCase):
         p = parser.as_string[+parser.Char('a') << +parser.Char('b')]
         s = io.StringIO('aaaabbbb')
         self.assertEqual((True, 'aaaabbbb'), p.parse(s))
+
+
+class LitTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        p = parser.lit('abcd')
+        s = io.StringIO('abcd')
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
+
+    def test_parse_fail(self):
+        p = parser.lit('abcd')
+        s = io.StringIO('abc')
+        self.assertEqual((False, None), p.parse(s))
 
 
 if __name__ == '__main__':
