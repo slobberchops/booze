@@ -125,6 +125,10 @@ class ParserStateTestCase(unittest.TestCase):
 
 class ParserTestCase(unittest.TestCase):
 
+    def test_parse_string(self):
+        p = parser.Char('a')
+        self.assertEqual((True, 'a'), p.parse('a'))
+
     def test_parse(self):
         p = parser.Parser()
         s = io.StringIO("test")
@@ -295,8 +299,7 @@ class SeqTestCase(unittest.TestCase):
 
     def test_non_parser(self):
         seq = parser.Seq('hello')
-        s = io.StringIO('hello')
-        self.assertEqual((True, parser.UNUSED), seq.parse(s))
+        self.assertEqual((True, parser.UNUSED), seq.parse('hello'))
 
 
 class AltTestCase(unittest.TestCase):

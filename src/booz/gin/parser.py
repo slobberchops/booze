@@ -13,8 +13,7 @@
 # limitations under the License.
 
 import contextlib
-
-from . import util
+import io
 
 class UNUSED:
 
@@ -108,6 +107,8 @@ class Parser:
     """Base class for parsers."""
 
     def parse(self, input):
+        if isinstance(input, str):
+            input = io.StringIO(input)
         if not isinstance(input, ParserState):
             input = ParserState(input)
         with input as state:
