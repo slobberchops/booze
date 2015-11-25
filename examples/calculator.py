@@ -54,3 +54,4 @@ if __name__ == '__main__':
     print_calc('2 * 5 + 20')
     print_calc('2 * (5 + 20)')
     print_calc('2 * 3 * 4 + 10 * 20 * 30')
+    print_calc('2 + 3 + 4 * 10 + 20 + 30')
