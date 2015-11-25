@@ -35,7 +35,7 @@ calc = exp
 
 mult      %= ((value << mult_op << mult)       [apply_action]
            | value)
-arith     %= ((mult << arith_op << arith)       [apply_action]
+arith     %= ((mult << arith_op << arith)      [apply_action]
            | mult)
 value     %= dec | '(' << exp << ')'
 exp       %= arith
