@@ -27,6 +27,24 @@ class SingletonTestCase(unittest.TestCase):
         self.assertIsInstance(singleton, Cls)
 
 
+class CalculatedPropertyTestCase(unittest.TestCase):
+
+    def test_caclulated_property(self):
+        class Cls:
+
+            call_count = 0
+
+            @util.calculated_property
+            def prop(self):
+                self.call_count += 1
+                return 100
+
+        instance = Cls()
+        self.assertEqual(100, instance.prop)
+        self.assertEqual(1, instance.call_count)
+        self.assertEqual(100, instance.prop)
+        self.assertEqual(1, instance.call_count)
+
 
 if __name__ == '__main__':
     unittest.main()

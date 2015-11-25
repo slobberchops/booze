@@ -12,6 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
+
 
 def singleton(cls):
     return cls()
+
+
+def calculated_property(method):
+    cached_value_name = '_cached_' + method.__name__
+    @property
+    @functools.wraps(method)
+    def calculated_wrapper(self):
+        try:
+            return getattr(self, cached_value_name)
+        except AttributeError:
+            value = method(self)
+            setattr(self, cached_value_name, value)
+            return value
+    return calculated_wrapper
