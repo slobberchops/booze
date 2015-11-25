@@ -25,17 +25,8 @@ class UnusedTestCase(unittest.TestCase):
     def test_repr(self):
         self.assertEqual('UNUSED', repr(parser.UNUSED))
 
-
-class TupleToAttributres(unittest.TestCase):
-
-    def test_empty_tuple(self):
-        self.assertEqual(parser.UNUSED, parser.tuple_to_attributes(()))
-
-    def test_unused_values(self):
-        self.assertEqual(parser.UNUSED, parser.tuple_to_attributes((parser.UNUSED, parser.UNUSED)))
-
-    def test_strip_unused(self):
-        self.assertEqual('ok', parser.tuple_to_attributes((parser.UNUSED, 'ok', parser.UNUSED)))
+    def test_bool(self):
+        self.assertFalse(parser.UNUSED)
 
 
 class AsParserTestCase(unittest.TestCase):
@@ -228,6 +219,10 @@ class ParserTestCase(unittest.TestCase):
         with self.assertRaises(TypeError):
             p.parse(s, ' ')
 
+    def test_attr_type(self):
+        with self.assertRaises(NotImplementedError):
+            parser.Parser().attr_type
+
 
 class CharTestCase(unittest.TestCase):
 
@@ -324,6 +319,37 @@ class SeqTestCase(unittest.TestCase):
         seq = parser.Seq('hello')
         self.assertEqual((True, parser.UNUSED), seq.parse('hello'))
 
+    def test_variable_uniform_type(self):
+        seq = parser.Char('a') << parser.Char('b') << parser.Char('c')
+        self.assertEqual(parser.AttrType.TUPLE, seq.attr_type)
+
+    def test_variable_attr_type(self):
+        o = object()
+        seq = parser.Char('a') << parser.lit('b')[lambda: o]
+        self.assertEqual(parser.AttrType.TUPLE, seq.attr_type)
+        self.assertEqual((True, ('a', o)), seq.parse('abc'))
+
+    def test_all_unused(self):
+        seq = parser.lit('a') << 'b' << 'c'
+        self.assertEqual(parser.AttrType.UNUSED, seq.attr_type)
+        self.assertEqual((True, parser.UNUSED), seq.parse('abc'))
+
+    def test_singleton_object(self):
+        o = object()
+        seq = '(' << parser.lit('a')[lambda: o] << ')'
+        self.assertEqual(parser.AttrType.OBJECT, seq.attr_type)
+        self.assertEqual((True, o), seq.parse('(a)'))
+
+    def test_singleton_string(self):
+        seq = '(' << parser.String('a') << ')'
+        self.assertEqual(parser.AttrType.STRING, seq.attr_type)
+        self.assertEqual((True, 'a'), seq.parse('(a)'))
+
+    def test_singleton_tuple(self):
+        seq = '(' << (parser.String('a') << parser.String('b')) << ')'
+        self.assertEqual(parser.AttrType.TUPLE, seq.attr_type)
+        self.assertEqual((True, ('a', 'b')), seq.parse('(ab)'))
+
 
 class AltTestCase(unittest.TestCase):
 
@@ -365,6 +391,24 @@ class AltTestCase(unittest.TestCase):
         s = io.StringIO('hello')
         self.assertEqual((True, parser.UNUSED), alt.parse(s))
 
+    def test_all_unused(self):
+        alt = parser.lit('a') | 'b' | 'c'
+        self.assertEqual(parser.AttrType.UNUSED, alt.attr_type)
+        self.assertEqual((True, parser.UNUSED), alt.parse('a'))
+
+    def test_all_string(self):
+        alt = parser.String('a') | parser.String('b') | parser.String('c')
+        self.assertEqual(parser.AttrType.STRING, alt.attr_type)
+        self.assertEqual((True, 'a'), alt.parse('a'))
+
+    def test_all_tuple(self):
+        alt = (parser.String('a') << parser.String('b')) | (parser.String('c') << parser.String('d'))
+        self.assertEqual(parser.AttrType.TUPLE, alt.attr_type)
+        self.assertEqual((True, ('a', 'b')), alt.parse('ab'))
+
+    def test_empty_alt(self):
+        self.assertEqual(parser.AttrType.UNUSED, parser.Alt().attr_type)
+
 
 class UnaryTestCase(unittest.TestCase):
 
@@ -377,6 +421,12 @@ class UnaryTestCase(unittest.TestCase):
         p1 = parser.Parser()
         p2 = parser.Unary(p1)
         self.assertIs(p1, p2.parser)
+
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.OBJECT, parser.Unary(parser.lit('a')[lambda: object()]).attr_type)
+        self.assertEqual(parser.AttrType.STRING, parser.Unary(parser.String('a')).attr_type)
+        self.assertEqual(parser.AttrType.UNUSED, parser.Unary(parser.lit('a')).attr_type)
+        self.assertEqual(parser.AttrType.TUPLE, parser.Unary(parser.String('a') << parser.String('b')).attr_type)
 
 
 class ActionTestCase(unittest.TestCase):
@@ -404,8 +454,13 @@ class ActionTestCase(unittest.TestCase):
 
     def test_func(self):
         f = lambda v: v + v
-        p2 = parser.Action(parser.Char('abc'), f)
-        self.assertEqual(f, p2.func)
+        p = parser.Action(parser.Char('abc'), f)
+        self.assertEqual(f, p.func)
+
+    def test_attr_type(self):
+        f = lambda v: v + v
+        p = parser.Action(parser.Char('abc'), f, parser.AttrType.STRING)
+        self.assertEqual(parser.AttrType.STRING, p.attr_type)
 
 
 class DirectiveParserTest(unittest.TestCase):
@@ -471,6 +526,13 @@ class FuncDirectiveParserTestCase(unittest.TestCase):
     def test_func(self):
         self.assertEqual(self.func, self.parser.func)
 
+    def test_attr_type_not_provided(self):
+        self.assertEqual(parser.AttrType.STRING, self.parser.attr_type)
+
+    def test_attr_type_provided(self):
+        p = parser.FuncDirectiveParser(parser.Char('a'), self.func, parser.AttrType.OBJECT)
+        self.assertEqual(parser.AttrType.OBJECT, p.attr_type)
+
 
 class FuncDirectiveTestCase(unittest.TestCase):
 
@@ -499,6 +561,19 @@ class FuncDirectiveTestCase(unittest.TestCase):
     def test_func(self):
         self.assertEqual(self.func_directive.func, self.func)
 
+    def test_func_directive_attr_type(self):
+        self.assertIsNone(parser.FuncDirective(self.func).attr_type)
+        self.assertEqual(parser.AttrType.OBJECT, parser.FuncDirective(self.func, parser.AttrType.OBJECT).attr_type)
+
+    def test_attr_type_not_provided(self):
+        self.assertEqual(parser.AttrType.STRING, self.func_directive[parser.Char('a')].attr_type)
+        self.assertEqual(parser.AttrType.UNUSED, self.func_directive[parser.lit('a')].attr_type)
+
+    def test_attr_type_provided(self):
+        d = parser.FuncDirective(self.func, parser.AttrType.OBJECT)
+        self.assertEqual(parser.AttrType.OBJECT, d[parser.Char('a')].attr_type)
+        self.assertEqual(parser.AttrType.OBJECT, d[parser.lit('a')].attr_type)
+
 
 class PostDirectiveTestCase(unittest.TestCase):
 
@@ -513,7 +588,7 @@ class PostDirectiveTestCase(unittest.TestCase):
         self.committed = None
         self.successful = None
         self.value = None
-        self.directive = parser.post_directive(self.post_func)
+        self.directive = parser.post_directive()(self.post_func)
         self.parser = self.directive[parser.Char('a')]
 
     def test_parse(self):
@@ -532,6 +607,15 @@ class PostDirectiveTestCase(unittest.TestCase):
         self.assertIsNone(self.successful)
         self.assertIsNone(self.value)
 
+    def test_attr_type_none_provided(self):
+        self.assertEqual(parser.AttrType.STRING, self.directive[parser.String('a')].attr_type)
+        self.assertEqual(parser.AttrType.UNUSED, self.directive[parser.lit('a')].attr_type)
+
+    def test_attr_type_provided(self):
+        d = parser.post_directive(parser.AttrType.OBJECT)(self.post_func)
+        self.assertEqual(parser.AttrType.OBJECT, d[parser.String('a')].attr_type)
+        self.assertEqual(parser.AttrType.OBJECT, d[parser.lit('a')].attr_type)
+
 
 class RepeatTestCase(unittest.TestCase):
 
@@ -540,7 +624,7 @@ class RepeatTestCase(unittest.TestCase):
         s = io.StringIO('abcabcdef')
         self.assertEqual((True, tuple('abcabc')), p.parse(s))
         self.assertEqual(6, s.tell())
-        self.assertEqual((True, parser.UNUSED), p.parse(s))
+        self.assertEqual((True, ()), p.parse(s))
         self.assertEqual(6, s.tell())
 
     def test_parse_minimum(self):
@@ -598,6 +682,24 @@ class RepeatTestCase(unittest.TestCase):
         self.assertEqual(1, p3.maximum)
         self.assertTrue(isinstance(p3, parser.Repeat.__parser_type__))
 
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.TUPLE, (+parser.lit('a')[lambda: object()]).attr_type)
+        self.assertEqual(parser.AttrType.TUPLE, (+parser.String('a')).attr_type)
+        self.assertEqual(parser.AttrType.UNUSED, (+parser.lit('a')).attr_type)
+
+    def test_is_optional(self):
+        self.assertTrue((-parser.Char('a')).is_optional)
+        self.assertTrue(parser.Repeat(0, 1)[parser.Char('a')].is_optional)
+        self.assertFalse((+parser.Char('a')).is_optional)
+        self.assertFalse(parser.Repeat(0, 2)[parser.Char('a')].is_optional)
+
+    def test_attr_type_opt_optimization(self):
+        self.assertEqual(parser.AttrType.STRING, (-parser.String('a')).attr_type)
+
+    def test_value_opt_optimization(self):
+        self.assertEqual((True, 'a'), (-parser.String('a')).parse('a'))
+        self.assertEqual((True, parser.UNUSED), (-parser.String('a')).parse('b'))
+
 
 class OmitTestCase(unittest.TestCase):
 
@@ -610,6 +712,10 @@ class OmitTestCase(unittest.TestCase):
         p = parser.omit[parser.Char('a')]
         s = io.StringIO('b')
         self.assertEqual((False, None), p.parse(s))
+
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.UNUSED, parser.omit[parser.Char('a')].attr_type)
+        self.assertEqual(parser.AttrType.UNUSED, parser.omit[parser.lit('a')].attr_type)
 
 
 class AsStringTestCase(unittest.TestCase):
@@ -639,6 +745,11 @@ class AsStringTestCase(unittest.TestCase):
         s = io.StringIO('aaaabbbb')
         self.assertEqual((True, 'aaaabbbb'), p.parse(s))
 
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.STRING, parser.as_string[parser.Char('a')].attr_type)
+        self.assertEqual(parser.AttrType.STRING, parser.as_string[parser.Char('a') << parser.Char('b')].attr_type)
+        self.assertEqual(parser.AttrType.STRING, parser.as_string[parser.lit('a')].attr_type)
+
 
 class LitTestCase(unittest.TestCase):
 
@@ -651,6 +762,9 @@ class LitTestCase(unittest.TestCase):
         p = parser.lit('abcd')
         s = io.StringIO('abc')
         self.assertEqual((False, None), p.parse(s))
+
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.UNUSED, parser.lit('a').attr_type)
 
 
 class ObjectLexemeTestCase(unittest.TestCase):
@@ -667,6 +781,10 @@ class ObjectLexemeTestCase(unittest.TestCase):
     def test_external_spaces(self):
         self.assertEqual((True, ('t', 'a', 'g')), self.parser.parse(' <tag>', ' '))
 
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.STRING, parser.object_lexeme[parser.Char('a')].attr_type)
+        self.assertEqual(parser.AttrType.UNUSED, parser.object_lexeme[parser.lit('a')].attr_type)
+
 
 class LexemeTestCase(unittest.TestCase):
 
@@ -681,6 +799,10 @@ class LexemeTestCase(unittest.TestCase):
 
     def test_external_spaces(self):
         self.assertEqual((True, 'tag'), self.parser.parse(' <tag>', ' '))
+
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.STRING, parser.lexeme[parser.Char('a')].attr_type)
+        self.assertEqual(parser.AttrType.STRING, parser.lexeme[parser.lit('a')].attr_type)
 
 
 class RuleTestCase(unittest.TestCase):
@@ -705,6 +827,32 @@ class RuleTestCase(unittest.TestCase):
         r = parser.Rule()
         with self.assertRaises(TypeError):
             r.parser = object()
+
+    def test_uninitialized_attr_type(self):
+        with self.assertRaises(NotImplementedError):
+            parser.Rule().attr_type
+
+    def test_initialized_attr_type(self):
+        r = parser.Rule()
+        r %= parser.Char('a')
+        self.assertEqual(parser.AttrType.STRING, r.attr_type)
+        r %= parser.lit('a')
+        self.assertEqual(parser.AttrType.UNUSED, r.attr_type)
+
+    def test_expected_attr_type(self):
+        r = parser.Rule(parser.AttrType.STRING)
+        self.assertEqual(parser.AttrType.STRING, r.attr_type)
+
+    def test_assign_to_expected_attr(self):
+        r = parser.Rule(parser.AttrType.STRING)
+        r %= parser.Char('a')
+        self.assertEqual(parser.AttrType.STRING, r.attr_type)
+
+    def test_illegal_assign_to_expected_attr(self):
+        r = parser.Rule(parser.AttrType.STRING)
+        p = parser.lit('a')
+        with self.assertRaises(ValueError):
+            r %= p
 
 
 if __name__ == '__main__':

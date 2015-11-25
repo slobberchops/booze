@@ -16,12 +16,12 @@ import operator
 
 from booz.gin import *
 
-add_action = lambda _: operator.add
-sub_action = lambda _: operator.sub
-mul_action = lambda _: operator.mul
-div_action = lambda _: operator.floordiv
+add_action = lambda: operator.add
+sub_action = lambda: operator.sub
+mul_action = lambda: operator.mul
+div_action = lambda: operator.floordiv
 
-apply_action = lambda v: v[1](v[0], v[2])
+apply_action = lambda lval, op, rval: op(lval, rval)
 
 arith_op  = lit('+')[add_action] | lit('-')[sub_action]
 mult_op   = lit('*')[mul_action] | lit('/')[div_action]
@@ -30,7 +30,7 @@ dec       = lexeme[+Char('0123456789')][int]
 arith     = Rule()
 mult      = Rule()
 value     = Rule()
-exp       = Rule()
+exp       = Rule(AttrType.OBJECT)
 calc = exp
 
 mult      %= ((value << mult_op << mult)       [apply_action]

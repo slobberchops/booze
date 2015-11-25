@@ -13,28 +13,20 @@
 # limitations under the License.
 
 import contextlib
+import enum
 import io
 
 from . import util
 
 
+@util.singleton
 class UNUSED:
 
     def __repr__(self):
         return 'UNUSED'
 
-UNUSED = UNUSED()
-
-
-def tuple_to_attributes(tpl):
-    tpl = tuple(v for v in tpl if v != UNUSED)
-    if not tpl:
-        return UNUSED
-    else:
-        if len(tpl) == 1:
-            return tpl[0]
-        else:
-            return tpl
+    def __bool__(self):
+        return False
 
 
 def as_parser(value):
@@ -123,8 +115,20 @@ class ParserState:
         return False
 
 
+class AttrType(enum.Enum):
+
+    UNUSED = 1
+    OBJECT = 2
+    STRING = 3
+    TUPLE = 4
+
+
 class Parser:
     """Base class for parsers."""
+
+    @property
+    def attr_type(self):
+        raise NotImplementedError
 
     def parse(self, input, skipper=None):
         if skipper is not None and isinstance(input, ParserState):
@@ -184,6 +188,10 @@ class Char(Parser):
         self.__chars = None if chars is None else set(chars)
 
     @property
+    def attr_type(self):
+        return AttrType.STRING
+
+    @property
     def chars(self):
         return self.__chars
 
@@ -199,6 +207,10 @@ class String(Parser):
 
     def __init__(self, string):
         self.__string = string
+
+    @property
+    def attr_type(self):
+        return AttrType.STRING
 
     @property
     def string(self):
@@ -222,15 +234,40 @@ class AggregateParser(Parser):
 
 class Seq(AggregateParser):
 
+    @util.calculated_property
+    def attr_type(self):
+        types = self.__attr_types
+        if isinstance(types, tuple):
+            return AttrType.TUPLE
+        else:
+            return types
+
+    @util.calculated_property
+    def __attr_types(self):
+        all_types = tuple(p.attr_type for p in self.parsers if p.attr_type is not AttrType.UNUSED)
+        if len(all_types) == 0:
+            return AttrType.UNUSED
+        elif len(all_types) == 1:
+            return all_types[0]
+        else:
+            return all_types
+
+
     def _parse(self, state):
         values = []
         for parser in self.parsers:
             result, value = parser.parse(state)
             if not result:
                 return
-            else:
+            elif parser.attr_type != AttrType.UNUSED:
                 values.append(value)
-        state.commit(tuple_to_attributes(values))
+
+        if len(values) == 0:
+            state.commit(UNUSED)
+        elif len(values) == 1:
+            state.commit(values[0])
+        else:
+            state.commit(tuple(values))
 
     def __lshift__(self, other):
         if isinstance(other, Seq):
@@ -240,6 +277,15 @@ class Seq(AggregateParser):
 
 
 class Alt(AggregateParser):
+
+    @util.calculated_property
+    def attr_type(self):
+        all_types = tuple(p.attr_type for p in self.parsers)
+        if len(all_types) == 0:
+            return AttrType.UNUSED
+        else:
+            found_type = all_types[0]
+            return found_type if all(t == found_type for t in all_types[1:]) else AttrType.OBJECT
 
     def _parse(self, state):
         for parser in self.parsers:
@@ -261,6 +307,10 @@ class Unary(Parser):
         self.__parser = parser
 
     @property
+    def attr_type(self):
+        return self.__parser.attr_type
+
+    @property
     def parser(self):
         return self.__parser
 
@@ -270,9 +320,14 @@ class Unary(Parser):
 
 class Action(Unary):
 
-    def __init__(self, parser, func):
+    def __init__(self, parser, func, attr_type=AttrType.OBJECT):
         super(Action, self).__init__(parser)
         self.__func = func
+        self.__attr_type = attr_type
+
+    @property
+    def attr_type(self):
+        return self.__attr_type
 
     @property
     def func(self):
@@ -281,7 +336,10 @@ class Action(Unary):
     def _parse(self, state):
         super(Action, self)._parse(state)
         if state.successful:
-            params = state.value if isinstance(state.value, tuple) else (state.value,)
+            if self.parser.attr_type == AttrType.UNUSED:
+                params = ()
+            else:
+                params = state.value if isinstance(state.value, tuple) else (state.value,)
             state.value = self.__func(*params)
 
 
@@ -311,9 +369,14 @@ class DirectiveParser(Unary):
 
 class FuncDirectiveParser(DirectiveParser):
 
-    def __init__(self, parser, func):
+    def __init__(self, parser, func, attr_type=None):
         super(FuncDirectiveParser, self).__init__(parser)
         self.__func = func
+        self.__attr_type = attr_type if attr_type else parser.attr_type
+
+    @property
+    def attr_type(self):
+        return self.__attr_type
 
     @property
     def func(self):
@@ -325,26 +388,40 @@ class FuncDirectiveParser(DirectiveParser):
 
 class FuncDirective:
 
-    def __init__(self, func):
+    def __init__(self, func, attr_type=None):
         self.__func = func
+        self.__attr_type = attr_type
+
+    @property
+    def attr_type(self):
+        return self.__attr_type
 
     @property
     def func(self):
         return self.__func
 
     def __getitem__(self, parser):
-        return FuncDirectiveParser(parser, self.__func)
+        return FuncDirectiveParser(parser, self.__func, self.__attr_type if self.__attr_type else parser.attr_type)
 
 
-def post_directive(post_func):
-    @FuncDirective
-    @contextlib.contextmanager
-    def directive(state):
-        yield
-        if state.successful:
-            post_func(state)
-        return False
-    return directive
+def func_directive(attr_type=None):
+    def func_directive_decorator(func):
+        return FuncDirective(func, attr_type)
+    return func_directive_decorator
+
+
+def post_directive(attr_type=None):
+    def post_directive_decorator(post_func):
+        @func_directive(attr_type)
+        @contextlib.contextmanager
+        def directive(state):
+            yield
+            if state.successful:
+                post_func(state)
+            return False
+        return directive
+    return post_directive_decorator
+
 
 
 @directive_class
@@ -354,6 +431,17 @@ class Repeat(Unary):
         super(Repeat.__parser_type__, self).__init__(parser)
         self.__minimum = minimum
         self.__maximum = maximum
+
+    @util.calculated_property
+    def attr_type(self):
+        if self.is_optional:
+            return self.parser.attr_type
+        else:
+            return AttrType.UNUSED if self.parser.attr_type == AttrType.UNUSED else AttrType.TUPLE
+
+    @util.calculated_property
+    def is_optional(self):
+        return self.__minimum == 0 and self.__maximum == 1
 
     @property
     def minimum(self):
@@ -374,8 +462,10 @@ class Repeat(Unary):
                 else:
                     break
             count += 1
-        if count >= self.__minimum:
-            state.commit(tuple_to_attributes(values))
+        if self.is_optional:
+            state.commit(values[0] if values else UNUSED)
+        elif count >= self.__minimum:
+            state.commit(UNUSED if self.attr_type == AttrType.UNUSED else tuple(values))
 
     def __neg__(self):
         if self.__minimum == 1:
@@ -384,7 +474,7 @@ class Repeat(Unary):
             return super(Repeat.__parser_type__, self).__neg__()
 
 
-@post_directive
+@post_directive(AttrType.UNUSED)
 def omit(state):
     state.value = UNUSED
 
@@ -397,7 +487,7 @@ def _as_string(value):
     return str(value)
 
 
-@post_directive
+@post_directive(AttrType.STRING)
 def as_string(state):
     state.value = _as_string(state.value)
 
@@ -406,7 +496,7 @@ def lit(string):
     return omit[String(string)]
 
 
-@FuncDirective
+@func_directive()
 @contextlib.contextmanager
 def object_lexeme(state):
     skipper = state.skipper
@@ -425,12 +515,29 @@ class lexeme:
 
 class Rule(Parser):
 
+    def __init__(self, expected_attr_type=None):
+        self.__expected_attr_type = expected_attr_type
+
+    @property
+    def attr_type(self):
+        if self.__expected_attr_type:
+            return self.__expected_attr_type
+        else:
+            try:
+                parser = self.__parser
+            except AttributeError:
+                raise NotImplementedError
+            else:
+                return parser.attr_type
+
     @property
     def parser(self):
         return self.__parser
 
     @parser.setter
     def parser(self, parser):
+        if self.__expected_attr_type and self.__expected_attr_type != parser.attr_type:
+            raise ValueError('Unexpected attribute type')
         self.__parser = as_parser(parser)
 
     def _parse(self, state):
