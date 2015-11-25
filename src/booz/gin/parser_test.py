@@ -649,5 +649,35 @@ class LitTestCase(unittest.TestCase):
         self.assertEqual((False, None), p.parse(s))
 
 
+class ObjectLexemeTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.parser = parser.object_lexeme['<' << +parser.Char('abcdefghijklmnopqrstuvwxyz') << '>']
+
+    def test_parse(self):
+        self.assertEqual((True, ('t', 'a', 'g')), self.parser.parse('<tag>', ' '))
+
+    def test_internal_spaces(self):
+        self.assertEqual((False, None), self.parser.parse('< tag>', ' '))
+
+    def test_external_spaces(self):
+        self.assertEqual((True, ('t', 'a', 'g')), self.parser.parse(' <tag>', ' '))
+
+
+class LexemeTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.parser = parser.lexeme['<' << +parser.Char('abcdefghijklmnopqrstuvwxyz') << '>']
+
+    def test_parse(self):
+        self.assertEqual((True, 'tag'), self.parser.parse('<tag>', ' '))
+
+    def test_internal_spaces(self):
+        self.assertEqual((False, None), self.parser.parse('< tag>', ' '))
+
+    def test_external_spaces(self):
+        self.assertEqual((True, 'tag'), self.parser.parse(' <tag>', ' '))
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -15,6 +15,9 @@
 import contextlib
 import io
 
+from . import util
+
+
 class UNUSED:
 
     def __repr__(self):
@@ -339,6 +342,7 @@ def post_directive(post_func):
         yield
         if state.successful:
             post_func(state)
+        return False
     return directive
 
 
@@ -399,3 +403,20 @@ def as_string(state):
 
 def lit(string):
     return omit[String(string)]
+
+
+@FuncDirective
+@contextlib.contextmanager
+def object_lexeme(state):
+    skipper = state.skipper
+    state.skipper = None
+    yield
+    state.skipper = skipper
+    return False
+
+
+@util.singleton
+class lexeme:
+
+    def __getitem__(self, parser):
+        return as_string[object_lexeme[parser]]
