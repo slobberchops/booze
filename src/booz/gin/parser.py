@@ -54,9 +54,26 @@ class ParserState:
         def __init__(self, pos):
             self.pos = pos
 
-    def __init__(self, input):
-        self.__input = input
+    def __init__(self, input, skipper=None):
+        if isinstance(input, str):
+            self.__input = io.StringIO(input)
+        else:
+            self.__input = input
+        self.skipper = skipper
         self.__txs = []
+
+    @property
+    def skipper(self):
+        return self.__skipper
+
+    @skipper.setter
+    def skipper(self, skipper):
+        if isinstance(skipper, str):
+            self.__skipper = Char(skipper)
+        elif isinstance(skipper, Parser) or skipper is None:
+            self.__skipper = skipper
+        else:
+            raise TypeError('Unexpected parser {}'.format(type(skipper)))
 
     @property
     def _tx(self):
@@ -82,7 +99,7 @@ class ParserState:
     def read(self, *args, **kwargs):
         return self.__input.read(*args, **kwargs)
 
-    def commit(self, value):
+    def commit(self, value=UNUSED):
         self.value = value
         self._tx.commit = True
 
@@ -106,12 +123,24 @@ class ParserState:
 class Parser:
     """Base class for parsers."""
 
-    def parse(self, input):
-        if isinstance(input, str):
-            input = io.StringIO(input)
+    def parse(self, input, skipper=None):
+        if skipper is not None and isinstance(input, ParserState):
+            raise TypeError('May not provide ParserState and new skipper')
         if not isinstance(input, ParserState):
-            input = ParserState(input)
+            input = ParserState(input, skipper)
         with input as state:
+            if state.skipper:
+                status = True
+                skipper = state.skipper
+                state.skipper = None
+                try:
+                    while status:
+                        with state:
+                            status, _ = skipper.parse(state)
+                            if status:
+                                state.commit()
+                finally:
+                    state.skipper = skipper
             self._parse(state)
             return state.successful, state.value if state.successful else None
 

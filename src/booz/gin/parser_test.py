@@ -69,6 +69,10 @@ class ParserStateTestCase(unittest.TestCase):
         with self.assertRaises(IndexError):
             self.state.value
 
+    def test_string_in_constructor(self):
+        self.state = parser.ParserState('input')
+        self.assertEqual('input', self.state.read())
+
     def test_read_and_rollback(self):
         with self.state:
             self.assertEqual('a', self.state.read(1))
@@ -121,6 +125,10 @@ class ParserStateTestCase(unittest.TestCase):
             self.assertFalse(self.state.committed)
             self.assertFalse(self.state.successful)
             self.assertEqual(parser.UNUSED, self.state.value)
+
+    def test_bad_skipper(self):
+        with self.assertRaises(TypeError):
+            parser.ParserState(' ', object())
 
 
 class ParserTestCase(unittest.TestCase):
@@ -204,6 +212,21 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(p1, p2.parser)
         self.assertEqual(1, p2.minimum)
         self.assertIsNone(p2.maximum)
+
+    def test_skipping(self):
+        p = parser.String('abc') << parser.String('def')
+        self.assertEqual((True, ('abc', 'def')), p.parse('  abc  def  ', ' '))
+
+    def test_skipping_parser(self):
+        skipper = parser.String('()')
+        p = parser.String('abc') << parser.String('def')
+        self.assertEqual((True, ('abc', 'def')), p.parse('()()abc()()def()()', skipper))
+
+    def test_skipper_and_parser_state(self):
+        p = parser.Parser()
+        s = parser.ParserState('state')
+        with self.assertRaises(TypeError):
+            p.parse(s, ' ')
 
 
 class CharTestCase(unittest.TestCase):
