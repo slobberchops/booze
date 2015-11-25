@@ -45,9 +45,12 @@ class ParserStateTestCase(unittest.TestCase):
         self.state = parser.ParserState(self.input)
 
     def test_initial_state(self):
-        self.assertFalse(self.state.committed)
-        self.assertFalse(self.state.successful)
-        self.assertEqual(parser.UNUSED, self.state.value)
+        with self.assertRaises(IndexError):
+            self.state.committed
+        with self.assertRaises(IndexError):
+            self.state.successful
+        with self.assertRaises(IndexError):
+            self.state.value
 
     def test_read_and_rollback(self):
         with self.state:
@@ -60,7 +63,6 @@ class ParserStateTestCase(unittest.TestCase):
             self.assertFalse(self.state.committed)
             self.assertFalse(self.state.successful)
         self.assertEqual(0, self.input.tell())
-        self.assertEqual(parser.UNUSED, self.state.value)
 
     def test_read_and_commit(self):
         with self.state:
@@ -76,26 +78,32 @@ class ParserStateTestCase(unittest.TestCase):
             self.assertTrue(self.state.committed)
             self.assertTrue(self.state.successful)
         self.assertEqual(3, self.input.tell())
-        self.assertEqual('a value', self.state.value)
+
+    def test_commit_no_transaction(self):
+        with self.assertRaises(IndexError):
+            self.state.commit('not ready')
 
     def test_commit(self):
-        self.state.commit('a value')
-        self.assertTrue(self.state.committed)
-        self.assertTrue(self.state.successful)
-        self.assertEqual('a value', self.state.value)
+        with self.state:
+            self.state.commit('a value')
+            self.assertTrue(self.state.committed)
+            self.assertTrue(self.state.successful)
+            self.assertEqual('a value', self.state.value)
 
     def test_set_value(self):
-        self.state.value = 'a value'
-        self.assertFalse(self.state.committed)
-        self.assertTrue(self.state.successful)
-        self.assertEqual('a value', self.state.value)
+        with self.state:
+            self.state.value = 'a value'
+            self.assertFalse(self.state.committed)
+            self.assertTrue(self.state.successful)
+            self.assertEqual('a value', self.state.value)
 
     def test_rollback(self):
-        self.state.commit('a value')
-        self.state.rollback()
-        self.assertFalse(self.state.committed)
-        self.assertFalse(self.state.successful)
-        self.assertEqual(parser.UNUSED, self.state.value)
+        with self.state:
+            self.state.commit('a value')
+            self.state.rollback()
+            self.assertFalse(self.state.committed)
+            self.assertFalse(self.state.successful)
+            self.assertEqual(parser.UNUSED, self.state.value)
 
 
 class ParserTestCase(unittest.TestCase):
@@ -446,7 +454,7 @@ class PostDirectiveTestCase(unittest.TestCase):
         self.assertIsNone(self.value)
 
 
-class RepeatUnitTest(unittest.TestCase):
+class RepeatTestCase(unittest.TestCase):
 
     def test_parse_zero_or_more(self):
         p = parser.Repeat()[parser.Char('abc')]

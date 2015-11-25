@@ -37,50 +37,61 @@ def tuple_to_attributes(tpl):
 
 class ParserState:
 
+    class __Tx:
+
+        commit = False
+        success = False
+        value = UNUSED
+
+        def __init__(self, pos):
+            self.pos = pos
+
     def __init__(self, input):
-        if isinstance(input, ParserState):
-            input = input.__input
         self.__input = input
-        self.__pos = self.__input.tell()
-        self.__commit = False
-        self.__success = False
-        self.__value = UNUSED
+        self.__txs = []
+
+    @property
+    def _tx(self):
+        return self.__txs[-1]
 
     @property
     def committed(self):
-        return self.__commit
+        return self._tx.commit
 
     @property
     def successful(self):
-        return self.__success
+        return self._tx.success
 
     @property
     def value(self):
-        return self.__value
+        return self._tx.value
 
     @value.setter
     def value(self, value):
-        self.__value = value
-        self.__success = True
+        self._tx.value = value
+        self._tx.success = True
 
     def read(self, *args, **kwargs):
         return self.__input.read(*args, **kwargs)
 
     def commit(self, value):
         self.value = value
-        self.__commit = True
+        self._tx.commit = True
 
     def rollback(self):
-        self.__commit = False
-        self.__success = False
-        self.__value = UNUSED
+        self._tx.commit = False
+        self._tx.success = False
+        del self._tx.value
 
     def __enter__(self):
+        pos = self.__input.tell()
+        self.__txs.append(self.__Tx(pos))
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         if not self.committed:
-            self.__input.seek(self.__pos)
+            self.__input.seek(self._tx.pos)
+        del self.__txs[-1]
         return False
 
 
@@ -88,7 +99,9 @@ class Parser:
     """Base class for parsers."""
 
     def parse(self, input):
-        with ParserState(input) as state:
+        if not isinstance(input, ParserState):
+            input = ParserState(input)
+        with input as state:
             self._parse(state)
             return state.successful, state.value if state.successful else None
 
@@ -185,6 +198,7 @@ class Alt(AggregateParser):
             result, value = parser.parse(state)
             if result:
                 state.commit(value)
+                break
 
     def __or__(self, other):
         if isinstance(other, Alt):
@@ -303,7 +317,7 @@ class Repeat(Unary):
         count = 0
         values = []
         while self.__maximum is None or count < self.__maximum:
-            with ParserState(state) as next_state:
+            with state as next_state:
                 super(Repeat.__parser_type__, self)._parse(next_state)
                 if next_state.successful:
                     values.append(next_state.value)
