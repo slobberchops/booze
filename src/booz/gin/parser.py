@@ -281,7 +281,8 @@ class Action(Unary):
     def _parse(self, state):
         super(Action, self)._parse(state)
         if state.successful:
-            state.value = self.__func(state.value)
+            params = state.value if isinstance(state.value, tuple) else (state.value,)
+            state.value = self.__func(*params)
 
 
 def directive_class(unary_parser):

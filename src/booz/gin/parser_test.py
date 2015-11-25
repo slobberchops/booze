@@ -398,6 +398,10 @@ class ActionTestCase(unittest.TestCase):
         p2 = parser.Action(p1, lambda v: v + v)
         self.assertEqual(p1, p2.parser)
 
+    def test_parser_multi_value(self):
+        p = (parser.Char('a') << parser.Char('b'))[lambda a, b: a.upper() + b]
+        self.assertEqual((True, 'Ab'), p.parse('ab'))
+
     def test_func(self):
         f = lambda v: v + v
         p2 = parser.Action(parser.Char('abc'), f)
