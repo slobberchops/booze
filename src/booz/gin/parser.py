@@ -139,6 +139,22 @@ class AttrType(enum.Enum):
         else:
             return False
 
+    def check_compatible(self, value):
+        if not self.compatible(value):
+            raise TypeError('Value {} incompatible with AttrType.{}'.format(repr(value), self.name))
+
+    @staticmethod
+    def type_for(value):
+        if value is UNUSED:
+            return AttrType.UNUSED
+        if isinstance(value, str):
+            return AttrType.STRING
+        elif isinstance(value, tuple):
+            return AttrType.TUPLE
+        else:
+            return AttrType.OBJECT
+
+
 class Parser:
     """Base class for parsers."""
 

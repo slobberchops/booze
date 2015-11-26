@@ -142,6 +142,24 @@ class AttrTypeTestCase(unittest.TestCase):
         self.assertFalse(parser.AttrType.STRING.compatible(object()))
         self.assertFalse(parser.AttrType.TUPLE.compatible('a string'))
 
+    def test_check_compatible(self):
+        parser.AttrType.UNUSED.check_compatible(object())
+        parser.AttrType.OBJECT.check_compatible(object())
+        parser.AttrType.STRING.check_compatible('a string')
+        parser.AttrType.TUPLE.check_compatible(('a', 'tuple'))
+
+    def test_check_not_compatible(self):
+        with self.assertRaisesRegexp(TypeError, r'Value 10 incompatible with AttrType\.STRING'):
+            parser.AttrType.STRING.check_compatible(10)
+        with self.assertRaisesRegexp(TypeError, r'Value \'a string\' incompatible with AttrType\.TUPLE'):
+            parser.AttrType.TUPLE.check_compatible('a string')
+
+    def test_type_for(self):
+        self.assertEqual(parser.AttrType.UNUSED, parser.AttrType.type_for(parser.UNUSED))
+        self.assertEqual(parser.AttrType.OBJECT, parser.AttrType.type_for(10))
+        self.assertEqual(parser.AttrType.STRING, parser.AttrType.type_for('a string'))
+        self.assertEqual(parser.AttrType.TUPLE, parser.AttrType.type_for(('a', 'tuple')))
+
 
 class ParserTestCase(unittest.TestCase):
 
