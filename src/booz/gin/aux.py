@@ -32,8 +32,7 @@ class Attr(parser.Parser):
             else:
                 self.__attr_type = parser.AttrType.OBJECT
         else:
-            if not attr_type.compatible(value):
-                raise TypeError('Value {} incompatible with AttrType.{}'.format(value, attr_type.name))
+            attr_type.check_compatible(value)
             self.__attr_type = attr_type
 
     @property
