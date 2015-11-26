@@ -129,6 +129,15 @@ class AttrType(enum.Enum):
     STRING = 3
     TUPLE = 4
 
+    def compatible(self, value):
+        if self in (AttrType.UNUSED, AttrType.OBJECT):
+            return True
+        elif isinstance(value, str) and self == AttrType.STRING:
+            return True
+        elif isinstance(value, tuple) and self == AttrType.TUPLE:
+            return True
+        else:
+            return False
 
 class Parser:
     """Base class for parsers."""

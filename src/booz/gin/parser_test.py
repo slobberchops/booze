@@ -130,6 +130,19 @@ class ParserStateTestCase(unittest.TestCase):
             parser.ParserState(' ', object())
 
 
+class AttrTypeTestCase(unittest.TestCase):
+
+    def test_compatible(self):
+        self.assertTrue(parser.AttrType.UNUSED.compatible(object()))
+        self.assertTrue(parser.AttrType.OBJECT.compatible(object()))
+        self.assertTrue(parser.AttrType.STRING.compatible('a string'))
+        self.assertTrue(parser.AttrType.TUPLE.compatible(('a', 'tuple')))
+
+    def test_not_compatible(self):
+        self.assertFalse(parser.AttrType.STRING.compatible(object()))
+        self.assertFalse(parser.AttrType.TUPLE.compatible('a string'))
+
+
 class ParserTestCase(unittest.TestCase):
 
     def test_parse_string(self):
