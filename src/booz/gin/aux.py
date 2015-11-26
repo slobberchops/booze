@@ -22,7 +22,7 @@ class Attr(parser.Parser):
         if value in (None, parser.UNUSED):
             raise TypeError('May not assign {} to Attr()'.format(value))
         if attr_type is parser.AttrType.UNUSED:
-            raise TypeError('Attr may not be UNUSED')
+            raise ValueError('Attr may not be UNUSED')
         self.__value = value
         if attr_type is None:
             if isinstance(value, str):
@@ -32,6 +32,8 @@ class Attr(parser.Parser):
             else:
                 self.__attr_type = parser.AttrType.OBJECT
         else:
+            if not attr_type.compatible(value):
+                raise TypeError('Value {} incompatible with AttrType.{}'.format(value, attr_type.name))
             self.__attr_type = attr_type
 
     @property

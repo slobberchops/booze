@@ -34,7 +34,7 @@ class AttrTestCase(unittest.TestCase):
             aux.Attr(parser.UNUSED)
 
     def test_unused_attr_type(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             aux.Attr(10, parser.AttrType.UNUSED)
 
     def test_attr_types(self):
@@ -47,6 +47,12 @@ class AttrTestCase(unittest.TestCase):
 
     def test_value(self):
         self.assertEqual('avalue', aux.Attr('avalue').value)
+
+    def test_incompatibile_values(self):
+        with self.assertRaises(TypeError):
+            aux.Attr(object(), parser.AttrType.STRING)
+        with self.assertRaises(TypeError):
+            aux.Attr(object(), parser.AttrType.TUPLE)
 
 
 class EoiTest(unittest.TestCase):
