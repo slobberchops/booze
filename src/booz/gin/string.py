@@ -18,5 +18,36 @@ from . import parser
 class Symbols(parser.Parser):
 
     def __init__(self, symbols, attr_type=None):
-        pass
+        if not symbols:
+            raise ValueError('Must provide some symbols')
+        if attr_type:
+            self.__attr_type = attr_type
+            for value in symbols.values():
+                attr_type.check_compatible(value)
+        else:
+            attr_type = None
+            for value in symbols.values():
+                if attr_type is None:
+                    attr_type = parser.AttrType.type_for(value)
+                else:
+                    next_type = parser.AttrType.type_for(value)
+                    if attr_type != next_type:
+                        attr_type = parser.AttrType.OBJECT
+                if attr_type == parser.AttrType.OBJECT:
+                    break
+            self.__attr_type = attr_type
 
+        self.__symbols = []
+        for symbol, value in sorted(symbols.items()):
+            self.__symbols.append((parser.String(symbol), value))
+
+    @property
+    def attr_type(self):
+        return self.__attr_type
+
+    def _parse(self, state):
+        for parser, value in self.__symbols:
+            status, _ = parser.parse(state)
+            if status:
+                state.commit(value)
+                break
