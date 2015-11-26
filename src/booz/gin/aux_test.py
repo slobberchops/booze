@@ -57,6 +57,9 @@ class EoiTest(unittest.TestCase):
     def test_parse_fail(self):
         self.assertEqual((False, None), aux.eoi.parse('anything'))
 
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.UNUSED, aux.eoi.attr_type)
+
 
 if __name__ == '__main__':
     unittest.main()
