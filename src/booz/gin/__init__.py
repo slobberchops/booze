@@ -14,4 +14,3 @@
 
 from booz.gin.aux import *
 from booz.gin.parser import *
-from booz.gin.string import *

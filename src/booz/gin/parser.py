@@ -30,11 +30,10 @@ class UNUSED:
 
 
 def as_parser(value):
-    from . import string
     if isinstance(value, str):
         return lit(value)
     elif isinstance(value, dict):
-        return string.Symbols(value)
+        return Symbols(value)
     elif isinstance(value, Parser):
         return value
     else:
@@ -379,6 +378,44 @@ class Action(Unary):
             else:
                 params = state.value if isinstance(state.value, tuple) else (state.value,)
             state.value = self.__func(*params)
+
+
+class Symbols(Parser):
+
+    def __init__(self, symbols, attr_type=None):
+        if not symbols:
+            raise ValueError('Must provide some symbols')
+        if attr_type:
+            self.__attr_type = attr_type
+            for value in symbols.values():
+                attr_type.check_compatible(value)
+        else:
+            attr_type = None
+            for value in symbols.values():
+                if attr_type is None:
+                    attr_type = AttrType.type_for(value)
+                else:
+                    next_type = AttrType.type_for(value)
+                    if attr_type != next_type:
+                        attr_type = AttrType.OBJECT
+                if attr_type == AttrType.OBJECT:
+                    break
+            self.__attr_type = attr_type
+
+        self.__symbols = []
+        for symbol, value in sorted(symbols.items()):
+            self.__symbols.append((String(symbol), value))
+
+    @property
+    def attr_type(self):
+        return self.__attr_type
+
+    def _parse(self, state):
+        for parser, value in self.__symbols:
+            status, _ = parser.parse(state)
+            if status:
+                state.commit(value)
+                break
 
 
 def directive_class(unary_parser):

@@ -514,6 +514,41 @@ class ActionTestCase(unittest.TestCase):
         self.assertEqual(parser.AttrType.STRING, p.attr_type)
 
 
+class SymbolsTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        symbols = parser.Symbols({'animal': 1, 'book': 2})
+        self.assertEqual((True, 1), symbols.parse('animal'))
+        self.assertEqual((True, 2), symbols.parse('book'))
+
+    def test_parse_fail(self):
+        symbols = parser.Symbols({'animal': 1, 'book': 2})
+        s = io.StringIO('planet')
+        self.assertEqual((False, None), symbols.parse(s))
+        self.assertEqual(0, s.tell())
+
+    def test_empty_symbols(self):
+        with self.assertRaises(ValueError):
+            parser.Symbols({})
+
+    def test_wrong_values_attr_type_provided(self):
+        with self.assertRaises(TypeError):
+            parser.Symbols({'animal': 20}, parser.AttrType.STRING)
+
+    def test_attr_type_provided(self):
+        self.assertEqual(parser.AttrType.OBJECT,
+                         parser.Symbols({'a': '1', 'b': '2'}, parser.AttrType.OBJECT).attr_type)
+
+    def test_attr_type_string(self):
+        self.assertEqual(parser.AttrType.STRING, parser.Symbols({'a': '1', 'b': '2'}).attr_type)
+
+    def test_attr_type_tuple(self):
+        self.assertEqual(parser.AttrType.TUPLE, parser.Symbols({'a': (1, 2), 'b': (3, 4)}).attr_type)
+
+    def test_attr_type_object(self):
+        self.assertEqual(parser.AttrType.OBJECT, parser.Symbols({'a': 'a string', 'b': (3, 4)}).attr_type)
+
+
 class DirectiveParserTest(unittest.TestCase):
 
     class Directive(parser.DirectiveParser):
