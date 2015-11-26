@@ -12,5 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from booz.gin.parser import *
 from booz.gin.aux import *
+from booz.gin.parser import *
+from booz.gin.string import *
