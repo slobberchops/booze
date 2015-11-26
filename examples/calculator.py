@@ -16,15 +16,14 @@ import operator
 
 from booz.gin import *
 
-add_action = lambda: operator.add
-sub_action = lambda: operator.sub
-mul_action = lambda: operator.mul
-div_action = lambda: operator.floordiv
-
 apply_action = lambda lval, op, rval: op(lval, rval)
 
-arith_op  = lit('+')[add_action] | lit('-')[sub_action]
-mult_op   = lit('*')[mul_action] | lit('/')[div_action]
+arith_op  = Symbols({'+': operator.add,
+                     '-': operator.sub})
+
+mult_op   = Symbols({'*': operator.mul,
+                     '/': operator.floordiv})
+
 dec       = lexeme[+Char('0123456789')][int]
 
 arith     = Rule()
