@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from . import parser
+from . import util
 
 
 class Attr(parser.Parser):
@@ -43,3 +44,15 @@ class Attr(parser.Parser):
 
     def _parse(self, state):
         state.commit(self.__value)
+
+
+@util.singleton
+class eoi(parser.Parser):
+
+    @property
+    def attr_type(self):
+        return parser.AttrType.UNUSED
+
+    def _parse(self, state):
+        if state.read(1) == '':
+            state.succeed()

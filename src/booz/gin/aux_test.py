@@ -49,5 +49,14 @@ class AttrTestCase(unittest.TestCase):
         self.assertEqual('avalue', aux.Attr('avalue').value)
 
 
+class EoiTest(unittest.TestCase):
+
+    def test_parse(self):
+        self.assertEqual((True, parser.UNUSED), aux.eoi.parse(''))
+
+    def test_parse_fail(self):
+        self.assertEqual((False, None), aux.eoi.parse('anything'))
+
+
 if __name__ == '__main__':
     unittest.main()
