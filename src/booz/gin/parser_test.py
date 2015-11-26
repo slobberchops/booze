@@ -41,6 +41,10 @@ class AsParserTestCase(unittest.TestCase):
         s = io.StringIO('parser')
         self.assertEqual((True, parser.UNUSED), p.parse(s))
 
+    def test_dict(self):
+        p = parser.as_parser({'a': 1, 'b': 2})
+        self.assertEqual((True, 1), p.parse('a'))
+
     def test_non_parser(self):
         with self.assertRaises(TypeError):
             parser.as_parser(object())
@@ -158,7 +162,7 @@ class AttrTypeTestCase(unittest.TestCase):
         self.assertEqual(parser.AttrType.UNUSED, parser.AttrType.type_for(parser.UNUSED))
         self.assertEqual(parser.AttrType.OBJECT, parser.AttrType.type_for(10))
         self.assertEqual(parser.AttrType.STRING, parser.AttrType.type_for('a string'))
-        self.assertEqual(parser.AttrType.TUPLE, parser.AttrType.type_for(('a', 'tuple')))
+        self.assertEqual(parser.AttrType.TUPLE, parser.AttrType.type_for(('a', 'string')))
 
 
 class ParserTestCase(unittest.TestCase):

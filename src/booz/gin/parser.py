@@ -30,8 +30,11 @@ class UNUSED:
 
 
 def as_parser(value):
+    from . import string
     if isinstance(value, str):
         return lit(value)
+    elif isinstance(value, dict):
+        return string.Symbols(value)
     elif isinstance(value, Parser):
         return value
     else:
