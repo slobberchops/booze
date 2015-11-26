@@ -56,3 +56,15 @@ class eoi(parser.Parser):
     def _parse(self, state):
         if state.read(1) == '':
             state.succeed()
+
+
+@util.singleton
+class eps(parser.Parser):
+
+    @property
+    def attr_type(self):
+        return parser.AttrType.UNUSED
+
+    def _parse(self, state):
+        state.succeed()
+

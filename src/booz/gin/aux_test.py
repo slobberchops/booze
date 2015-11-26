@@ -61,5 +61,15 @@ class EoiTest(unittest.TestCase):
         self.assertEqual(parser.AttrType.UNUSED, aux.eoi.attr_type)
 
 
+class EpsTest(unittest.TestCase):
+
+    def test_parse(self):
+        self.assertEqual((True, parser.UNUSED), aux.eps.parse(''))
+        self.assertEqual((True, parser.UNUSED), aux.eps.parse('abc'))
+
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.UNUSED, aux.eps.attr_type)
+
+
 if __name__ == '__main__':
     unittest.main()
