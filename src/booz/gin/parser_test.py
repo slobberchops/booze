@@ -212,6 +212,14 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(1, p2.minimum)
         self.assertIsNone(p2.maximum)
 
+    def test_invert(self):
+        p1 = parser.Char('a')
+        p2 = ~p1
+        s = io.StringIO('abc')
+        self.assertEqual((True, parser.UNUSED), p2.parse(s))
+        self.assertEqual(0, s.tell())
+        self.assertEqual(p1, p2.parser)
+
     def test_skipping(self):
         p = parser.String('abc') << parser.String('def')
         self.assertEqual((True, ('abc', 'def')), p.parse('  abc  def  ', ' '))
@@ -879,6 +887,30 @@ class PredicateTestCase(unittest.TestCase):
 
     def test_attr_type(self):
         self.assertEqual(parser.AttrType.UNUSED, parser.predicate[parser.Char('a')].attr_type)
+
+
+class NotPredicateTestCase(unittest.TestCase):
+
+    def test_parse(self):
+        p = parser.not_predicate[parser.Char('b')]
+        s = io.StringIO('abcd')
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
+        self.assertEqual(0, s.tell())
+
+    def test_parse_fail(self):
+        p = parser.not_predicate[parser.Char('a')]
+        s = io.StringIO('abcd')
+        self.assertEqual((False, None), p.parse(s))
+        self.assertEqual(0, s.tell())
+
+    def test_attr_type(self):
+        self.assertEqual(parser.AttrType.UNUSED, parser.not_predicate[parser.Char('a')].attr_type)
+
+    def test_alias(self):
+        p = parser.not_[parser.Char('b')]
+        s = io.StringIO('abcd')
+        self.assertEqual((True, parser.UNUSED), p.parse(s))
+        self.assertEqual(0, s.tell())
 
 
 if __name__ == '__main__':

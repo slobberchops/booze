@@ -98,6 +98,10 @@ class ParserState:
         self.value = value
         self._tx.commit = True
 
+    def succeed(self, value=UNUSED):
+        self.value = value
+        self._tx.commit = False
+
     def rollback(self):
         self._tx.commit = False
         self._tx.success = False
@@ -183,6 +187,9 @@ class Parser:
 
     def __pos__(self):
         return Repeat(1)[self]
+
+    def __invert__(self):
+        return predicate[self]
 
 
 class Char(Parser):
@@ -557,3 +564,13 @@ def predicate(state):
     state.uncommit()
 
 
+@func_directive(AttrType.UNUSED)
+@contextlib.contextmanager
+def not_predicate(state):
+    yield
+    if state.successful:
+        state.rollback()
+    else:
+        state.succeed()
+
+not_ = not_predicate
