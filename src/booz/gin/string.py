@@ -18,4 +18,5 @@ from . import parser
 class Symbols(parser.Parser):
 
     def __init__(self, symbols, attr_type=None):
+        pass
 
