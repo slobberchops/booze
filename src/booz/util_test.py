@@ -14,7 +14,7 @@
 
 import unittest
 
-from booz.gin import util
+from booz import util
 
 
 class SingletonTestCase(unittest.TestCase):

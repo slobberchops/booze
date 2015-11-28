@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from . import parser
-from . import util
+from .. import util
 
 
 class Attr(parser.Parser):

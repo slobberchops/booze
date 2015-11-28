@@ -16,7 +16,7 @@ import contextlib
 import enum
 import io
 
-from . import util
+from .. import util
 
 
 @util.singleton
