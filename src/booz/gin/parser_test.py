@@ -480,23 +480,23 @@ class UnaryTestCase(unittest.TestCase):
         self.assertEqual(parser.AttrType.TUPLE, parser.Unary(parser.String('a') << parser.String('b')).attr_type)
 
 
-class ActionTestCase(unittest.TestCase):
+class SemanticActionTestCase(unittest.TestCase):
 
     def test_parse(self):
-        p = parser.Action(parser.Char('abc'), lambda v: v + v)
+        p = parser.SemanticAction(parser.Char('abc'), lambda v: v + v)
         s = io.StringIO('b')
         self.assertEqual((True, 'bb'), p.parse(s))
         self.assertEqual(1, s.tell())
 
     def test_parse_fail(self):
-        p = parser.Action(parser.Char('abc'), lambda v: v + v)
+        p = parser.SemanticAction(parser.Char('abc'), lambda v: v + v)
         s = io.StringIO('x')
         self.assertEqual((False, None), p.parse(s))
         self.assertEqual(0, s.tell())
 
     def test_parser(self):
         p1 = parser.Char('abc')
-        p2 = parser.Action(p1, lambda v: v + v)
+        p2 = parser.SemanticAction(p1, lambda v: v + v)
         self.assertEqual(p1, p2.parser)
 
     def test_parser_multi_value(self):
@@ -505,12 +505,12 @@ class ActionTestCase(unittest.TestCase):
 
     def test_func(self):
         f = lambda v: v + v
-        p = parser.Action(parser.Char('abc'), f)
+        p = parser.SemanticAction(parser.Char('abc'), f)
         self.assertEqual(f, p.func)
 
     def test_attr_type(self):
         f = lambda v: v + v
-        p = parser.Action(parser.Char('abc'), f, parser.AttrType.STRING)
+        p = parser.SemanticAction(parser.Char('abc'), f, parser.AttrType.STRING)
         self.assertEqual(parser.AttrType.STRING, p.attr_type)
 
 

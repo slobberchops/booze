@@ -207,7 +207,7 @@ class Parser:
         return as_parser(other) | self
 
     def __getitem__(self, func):
-        return Action(self, func)
+        return SemanticAction(self, func)
 
     def __neg__(self):
         return Repeat(0, 1)[self]
@@ -355,10 +355,10 @@ class Unary(Parser):
         self.parser._parse(state)
 
 
-class Action(Unary):
+class SemanticAction(Unary):
 
     def __init__(self, parser, func, attr_type=AttrType.OBJECT):
-        super(Action, self).__init__(parser)
+        super(SemanticAction, self).__init__(parser)
         self.__func = func
         self.__attr_type = attr_type
 
@@ -371,7 +371,7 @@ class Action(Unary):
         return self.__func
 
     def _parse(self, state):
-        super(Action, self)._parse(state)
+        super(SemanticAction, self)._parse(state)
         if state.successful:
             if self.parser.attr_type == AttrType.UNUSED:
                 params = ()
