@@ -51,47 +51,63 @@ class ActionTestCase(unittest.TestCase):
     def test_call(self):
         c = self.action1(1, 2, 3, a='a', b='b', c='c')
         self.assertIsInstance(c, action.Call)
-        self.assertEqual(self.action1, c.func)
+        self.assertIs(self.action1, c.func)
         self.assertEqual((1, 2, 3), c.args)
         self.assertEqual({'a': 'a', 'b':'b', 'c':'c'}, c.kwargs)
 
-    def test_pos(self):
-        p = +self.action1
-        self.assertIsInstance(p, action.pos_)
-        self.assertEqual(operator.pos, p.func)
-
-    def test_neg(self):
-        p = -self.action1
-        self.assertIsInstance(p, action.neg_)
-        self.assertEqual(operator.neg, p.func)
-
-    def test_invert(self):
-        p = ~self.action1
-        self.assertIsInstance(p, action.invert_)
-        self.assertEqual(operator.invert, p.func)
+    def do_unary_test(self, action_impl, operator_func):
+        instance = operator_func(self.action1)
+        self.assertTrue(isinstance(instance, action_impl))
+        self.assertEqual(1, len(instance.args))
+        self.assertIs(self.action1, instance.args[0])
 
     def do_binop_test(self, action_impl, operator_func):
         instance = operator_func(self.action1, self.action2)
         self.assertTrue(isinstance(instance, action_impl))
-        self.assertEqual((self.action1, self.action2), instance.args)
+        self.assertEqual(2, len(instance.args))
+        self.assertIs(self.action1, instance.args[0])
+        self.assertIs(self.action2, instance.args[1])
 
-    def test_lt(self):
+    def test_unary(self):
+        self.do_unary_test(action.pos_, operator.pos)
+        self.do_unary_test(action.neg_, operator.neg)
+        self.do_unary_test(action.invert_, operator.invert)
+
+    def test_comparison(self):
         self.do_binop_test(action.lt_, operator.lt)
-
-    def test_le(self):
         self.do_binop_test(action.le_, operator.le)
-
-    def test_eq(self):
         self.do_binop_test(action.eq_, operator.eq)
-
-    def test_ne(self):
         self.do_binop_test(action.ne_, operator.ne)
-
-    def test_ge(self):
         self.do_binop_test(action.ge_, operator.ge)
-
-    def test_gt(self):
         self.do_binop_test(action.gt_, operator.gt)
+
+    def test_mathmatical(self):
+        self.do_binop_test(action.add_, operator.add)
+        self.do_binop_test(action.iadd_, operator.iadd)
+        self.do_binop_test(action.sub_, operator.sub)
+        self.do_binop_test(action.isub_, operator.isub)
+        self.do_binop_test(action.mul_, operator.mul)
+        self.do_binop_test(action.imul_, operator.imul)
+        self.do_binop_test(action.floordiv_, operator.floordiv)
+        self.do_binop_test(action.ifloordiv_, operator.ifloordiv)
+        self.do_binop_test(action.mod_, operator.mod)
+        self.do_binop_test(action.imod_, operator.imod)
+        self.do_binop_test(action.pow_, operator.pow)
+        self.do_binop_test(action.ipow_, operator.ipow)
+        self.do_binop_test(action.truediv_, operator.truediv)
+        self.do_binop_test(action.itruediv_, operator.itruediv)
+
+    def test_logical(self):
+        self.do_binop_test(action.and__, operator.and_)
+        self.do_binop_test(action.iand_, operator.iand)
+        self.do_binop_test(action.or__, operator.or_)
+        self.do_binop_test(action.ior_, operator.ior)
+        self.do_binop_test(action.lshift_, operator.lshift)
+        self.do_binop_test(action.ilshift_, operator.ilshift)
+        self.do_binop_test(action.rshift_, operator.rshift)
+        self.do_binop_test(action.irshift_, operator.irshift)
+        self.do_binop_test(action.xor_, operator.xor)
+        self.do_binop_test(action.ixor_, operator.ixor)
 
 
 class InvokeTest(unittest.TestCase):
@@ -257,16 +273,6 @@ class UnaryOperatorsTestCase(unittest.TestCase):
         self.do_operator_test(action.neg_, operator.neg, -1, 1)
         self.do_operator_test(action.invert_, operator.invert, -1, 0)
 
-    def test_container(self):
-        self.do_operator_test(action.len_, len, [1, 2, 3], 3)
-
-        self.assertTrue(issubclass(action.iter_, action.Call))
-        c = action.iter_(action.p[0])
-        self.assertEqual(iter, c.func)
-        i = c.invoke([1, 2, 3])
-        self.assertIsInstance(i, type(iter([])))
-        self.assertEqual([1, 2, 3], list(i))
-
 
 class BinaryOperatorsTestCase(unittest.TestCase):
 
@@ -336,28 +342,6 @@ class BinaryOperatorsTestCase(unittest.TestCase):
 
         self.do_operator_test(action.xor_, operator.xor, 3, 7, 4)
         self.do_operator_test(action.ixor_, operator.ixor, 3, 7, 4)
-
-    def test_container(self):
-        self.do_operator_test(action.contains_, operator.contains, [1, 2], 2, True)
-        self.do_operator_test(action.contains_, operator.contains, [1, 2], 3, False)
-
-        l = [1, 2, 3]
-        self.do_operator_test(action.delitem_, operator.delitem, l, 1, None)
-        self.assertEqual([1, 3], l)
-
-        l = [1, 2, 3]
-        self.do_operator_test(action.getitem_, operator.getitem, l, 1, 2)
-
-
-class MiscOperatorsTestCase(unittest.TestCase):
-
-    def test_set_item(self):
-        self.assertTrue(issubclass(action.setitem_, action.Call))
-        c = action.setitem_(action.p[0], action.p[1], action.p[2])
-        self.assertEqual(operator.setitem, c.func)
-        l = [1, 2, 3]
-        self.assertEqual(None, c.invoke(l, 1, 4))
-        self.assertEqual([1, 4, 3], l)
 
 
 if __name__ == '__main__':
