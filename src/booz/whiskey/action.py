@@ -34,6 +34,24 @@ class Action:
     def __invert__(self):
         return invert_(self)
 
+    def __lt__(self, other):
+        return lt_(self, other)
+
+    def __le__(self, other):
+        return le_(self, other)
+
+    def __eq__(self, other):
+        return eq_(self, other)
+
+    def __ne__(self, other):
+        return ne_(self, other)
+
+    def __ge__(self, other):
+        return ge_(self, other)
+
+    def __gt__(self, other):
+        return gt_(self, other)
+
 
 def invoke(value, *args, **kwargs):
     if isinstance(value, Action):
@@ -127,3 +145,11 @@ def func(func):
 pos_ = func(operator.pos)
 neg_ = func(operator.neg)
 invert_ = func(operator.invert)
+
+# Comparison functions
+lt_ = func(operator.lt)
+le_ = func(operator.le)
+eq_ = func(operator.eq)
+ne_ = func(operator.ne)
+ge_ = func(operator.ge)
+gt_ = func(operator.gt)

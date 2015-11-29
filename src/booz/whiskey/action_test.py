@@ -41,33 +41,57 @@ class MyValueAction(action.Action):
 class ActionTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.action = action.Action()
+        self.action1 = action.Action()
+        self.action2 = action.Action()
 
     def test_invoke(self):
         with self.assertRaises(NotImplementedError):
-            self.action.invoke(1, 2, 3, a='a', b='b', c='c')
+            self.action1.invoke(1, 2, 3, a='a', b='b', c='c')
 
     def test_call(self):
-        c = self.action(1, 2, 3, a='a', b='b', c='c')
+        c = self.action1(1, 2, 3, a='a', b='b', c='c')
         self.assertIsInstance(c, action.Call)
-        self.assertEqual(self.action, c.func)
+        self.assertEqual(self.action1, c.func)
         self.assertEqual((1, 2, 3), c.args)
         self.assertEqual({'a': 'a', 'b':'b', 'c':'c'}, c.kwargs)
 
     def test_pos(self):
-        p = +self.action
+        p = +self.action1
         self.assertIsInstance(p, action.pos_)
         self.assertEqual(operator.pos, p.func)
 
     def test_neg(self):
-        p = -self.action
+        p = -self.action1
         self.assertIsInstance(p, action.neg_)
         self.assertEqual(operator.neg, p.func)
 
     def test_invert(self):
-        p = ~self.action
+        p = ~self.action1
         self.assertIsInstance(p, action.invert_)
         self.assertEqual(operator.invert, p.func)
+
+    def do_binop_test(self, action_impl, operator_func):
+        instance = operator_func(self.action1, self.action2)
+        self.assertTrue(isinstance(instance, action_impl))
+        self.assertEqual((self.action1, self.action2), instance.args)
+
+    def test_lt(self):
+        self.do_binop_test(action.lt_, operator.lt)
+
+    def test_le(self):
+        self.do_binop_test(action.le_, operator.le)
+
+    def test_eq(self):
+        self.do_binop_test(action.eq_, operator.eq)
+
+    def test_ne(self):
+        self.do_binop_test(action.ne_, operator.ne)
+
+    def test_ge(self):
+        self.do_binop_test(action.ge_, operator.ge)
+
+    def test_gt(self):
+        self.do_binop_test(action.gt_, operator.gt)
 
 
 class InvokeTest(unittest.TestCase):
@@ -239,6 +263,43 @@ class UnaryOperatorsTestCase(unittest.TestCase):
         c = action.invert_(action.p[0])
         self.assertEqual(operator.invert, c.func)
         self.assertEqual(0, c.invoke(-1))
+
+
+class BinaryOperatorsTestCase(unittest.TestCase):
+
+    def do_operator_test(self, action_impl, operator_func, lvalue, rvalue, result):
+        self.assertTrue(issubclass(action_impl, action.Call))
+        c = action_impl(action.p[0], action.p[1])
+        self.assertEqual(operator_func, c.func)
+        self.assertEqual(result, c.invoke(lvalue, rvalue))
+
+    def test_lt(self):
+        self.do_operator_test(action.lt_, operator.lt, 10, 20, True)
+        self.do_operator_test(action.lt_, operator.lt, 20, 10, False)
+        self.do_operator_test(action.lt_, operator.lt, 10, 10, False)
+
+    def test_le(self):
+        self.do_operator_test(action.le_, operator.le, 10, 20, True)
+        self.do_operator_test(action.le_, operator.le, 20, 10, False)
+        self.do_operator_test(action.le_, operator.le, 10, 10, True)
+
+    def test_eq(self):
+        self.do_operator_test(action.eq_, operator.eq, 10, 10, True)
+        self.do_operator_test(action.eq_, operator.eq, 20, 10, False)
+
+    def test_ne(self):
+        self.do_operator_test(action.ne_, operator.ne, 20, 10, True)
+        self.do_operator_test(action.ne_, operator.ne, 10, 10, False)
+
+    def test_ge(self):
+        self.do_operator_test(action.ge_, operator.ge, 10, 20, False)
+        self.do_operator_test(action.ge_, operator.ge, 20, 10, True)
+        self.do_operator_test(action.ge_, operator.ge, 10, 10, True)
+
+    def test_gt(self):
+        self.do_operator_test(action.gt_, operator.gt, 10, 20, False)
+        self.do_operator_test(action.gt_, operator.gt, 20, 10, True)
+        self.do_operator_test(action.gt_, operator.gt, 10, 10, False)
 
 
 if __name__ == '__main__':
