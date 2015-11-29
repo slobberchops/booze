@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import operator
+
 from .. import util
 
 
@@ -22,6 +24,15 @@ class Action:
 
     def __call__(self, *args, **kwargs):
         return Call(self, *args, **kwargs)
+
+    def __pos__(self):
+        return pos_(self)
+
+    def __neg__(self):
+        return neg_(self)
+
+    def __invert__(self):
+        return invert_(self)
 
 
 def invoke(value, *args, **kwargs):
@@ -100,3 +111,19 @@ class Call(Action):
         args = [invoke(a, *args, **kwargs) for a in self.args]
         kwargs = {k: invoke(v, *args, **kwargs) for k, v in self.kwargs.items()}
         return func(*args, **kwargs)
+
+
+def func(func):
+    class Func(Call):
+
+        __func__ = func
+
+        def __init__(self, *args, **kwargs):
+            super(Func, self).__init__(func, *args, **kwargs)
+    return Func
+
+
+# Unary functions
+pos_ = func(operator.pos)
+neg_ = func(operator.neg)
+invert_ = func(operator.invert)

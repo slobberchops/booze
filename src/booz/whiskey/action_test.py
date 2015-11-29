@@ -12,25 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import operator
 import unittest
 
 from booz.whiskey import action
 
 
+class MyFuncAction(action.Action):
+    def __init__(self, value):
+        self.value = value
+
+    def invoke(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        return self.value
+
+
+class MyValueAction(action.Action):
+    def __init__(self, value):
+        self.value = value
+
+    def invoke(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        return self.value * 3
+
+
 class ActionTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.action = action.Action()
+
     def test_invoke(self):
-        a = action.Action()
         with self.assertRaises(NotImplementedError):
-            a.invoke(1, 2, 3, a='a', b='b', c='c')
+            self.action.invoke(1, 2, 3, a='a', b='b', c='c')
 
     def test_call(self):
-        a = action.Action()
-        c = a(1, 2, 3, a='a', b='b', c='c')
+        c = self.action(1, 2, 3, a='a', b='b', c='c')
         self.assertIsInstance(c, action.Call)
-        self.assertEqual(a, c.func)
+        self.assertEqual(self.action, c.func)
         self.assertEqual((1, 2, 3), c.args)
         self.assertEqual({'a': 'a', 'b':'b', 'c':'c'}, c.kwargs)
+
+    def test_pos(self):
+        p = +self.action
+        self.assertIsInstance(p, action.pos_)
+        self.assertEqual(operator.pos, p.func)
+
+    def test_neg(self):
+        p = -self.action
+        self.assertIsInstance(p, action.neg_)
+        self.assertEqual(operator.neg, p.func)
+
+    def test_invert(self):
+        p = ~self.action
+        self.assertIsInstance(p, action.invert_)
+        self.assertEqual(operator.invert, p.func)
 
 
 class InvokeTest(unittest.TestCase):
@@ -146,24 +183,6 @@ class CallTestCase(unittest.TestCase):
         self.assertEqual((1, 'a'), call.invoke(10, a='aa'))
 
     def test_invoke_actions(self):
-        class MyFuncAction(action.Action):
-            def __init__(self, value):
-                self.value = value
-
-            def invoke(self, *args, **kwargs):
-                self.args = args
-                self.kwargs = kwargs
-                return self.value
-
-        class MyValueAction(action.Action):
-            def __init__(self, value):
-                self.value = value
-
-            def invoke(self, *args, **kwargs):
-                self.args = args
-                self.kwargs = kwargs
-                return self.value * 3
-
         def func(*args, **kwargs):
             return tuple(v + v for v in args) + ({k: v + v for k, v in kwargs.items()},)
 
@@ -173,6 +192,53 @@ class CallTestCase(unittest.TestCase):
 
         call = action.Call(f, p, a=a)
         self.assertEqual((6, {'a': 'aaaaaa'}), call.invoke(10, a='aa'))
+
+
+class FuncTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.f = lambda: None
+        self.f_action = action.func(self.f)
+
+    def test_func(self):
+        self.assertTrue(issubclass(self.f_action, action.Call))
+        self.assertEqual(self.f, self.f_action.__func__)
+        c = self.f_action(1, 2, 3, a='a', b='b', c='c')
+        self.assertEqual(self.f, c.func)
+        self.assertEqual((1, 2, 3), c.args)
+        self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'}, c.kwargs)
+
+    def test_call(self):
+        def func(*args, **kwargs):
+            return tuple(v + v for v in args) + ({k: v + v for k, v in kwargs.items()},)
+
+        f = MyFuncAction(func)
+        p = MyValueAction(1)
+        a = MyValueAction('a')
+
+        call = action.Call(f, p, a=a)
+        self.assertEqual((6, {'a': 'aaaaaa'}), call.invoke(10, a='aa'))
+
+
+class UnaryOperatorsTestCase(unittest.TestCase):
+
+    def test_pos(self):
+        self.assertTrue(issubclass(action.pos_, action.Call))
+        c = action.pos_(action.p[0])
+        self.assertEqual(operator.pos, c.func)
+        self.assertEqual(-1, c.invoke(-1))
+
+    def test_neg(self):
+        self.assertTrue(issubclass(action.pos_, action.Call))
+        c = action.neg_(action.p[0])
+        self.assertEqual(operator.neg, c.func)
+        self.assertEqual(1, c.invoke(-1))
+
+    def test_invert(self):
+        self.assertTrue(issubclass(action.pos_, action.Call))
+        c = action.invert_(action.p[0])
+        self.assertEqual(operator.invert, c.func)
+        self.assertEqual(0, c.invoke(-1))
 
 
 if __name__ == '__main__':
