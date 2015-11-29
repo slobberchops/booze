@@ -246,23 +246,26 @@ class FuncTestCase(unittest.TestCase):
 
 class UnaryOperatorsTestCase(unittest.TestCase):
 
-    def test_pos(self):
-        self.assertTrue(issubclass(action.pos_, action.Call))
-        c = action.pos_(action.p[0])
-        self.assertEqual(operator.pos, c.func)
-        self.assertEqual(-1, c.invoke(-1))
+    def do_operator_test(self, action_impl, operator_func, value, result):
+        self.assertTrue(issubclass(action_impl, action.Call))
+        c = action_impl(action.p[0])
+        self.assertEqual(operator_func, c.func)
+        self.assertEqual(result, c.invoke(value))
 
-    def test_neg(self):
-        self.assertTrue(issubclass(action.pos_, action.Call))
-        c = action.neg_(action.p[0])
-        self.assertEqual(operator.neg, c.func)
-        self.assertEqual(1, c.invoke(-1))
+    def test_operators(self):
+        self.do_operator_test(action.pos_, operator.pos, -1, -1)
+        self.do_operator_test(action.neg_, operator.neg, -1, 1)
+        self.do_operator_test(action.invert_, operator.invert, -1, 0)
 
-    def test_invert(self):
-        self.assertTrue(issubclass(action.pos_, action.Call))
-        c = action.invert_(action.p[0])
-        self.assertEqual(operator.invert, c.func)
-        self.assertEqual(0, c.invoke(-1))
+    def test_container(self):
+        self.do_operator_test(action.len_, len, [1, 2, 3], 3)
+
+        self.assertTrue(issubclass(action.iter_, action.Call))
+        c = action.iter_(action.p[0])
+        self.assertEqual(iter, c.func)
+        i = c.invoke([1, 2, 3])
+        self.assertIsInstance(i, type(iter([])))
+        self.assertEqual([1, 2, 3], list(i))
 
 
 class BinaryOperatorsTestCase(unittest.TestCase):
@@ -273,33 +276,88 @@ class BinaryOperatorsTestCase(unittest.TestCase):
         self.assertEqual(operator_func, c.func)
         self.assertEqual(result, c.invoke(lvalue, rvalue))
 
-    def test_lt(self):
+    def test_comparison(self):
         self.do_operator_test(action.lt_, operator.lt, 10, 20, True)
         self.do_operator_test(action.lt_, operator.lt, 20, 10, False)
         self.do_operator_test(action.lt_, operator.lt, 10, 10, False)
 
-    def test_le(self):
         self.do_operator_test(action.le_, operator.le, 10, 20, True)
         self.do_operator_test(action.le_, operator.le, 20, 10, False)
         self.do_operator_test(action.le_, operator.le, 10, 10, True)
 
-    def test_eq(self):
         self.do_operator_test(action.eq_, operator.eq, 10, 10, True)
         self.do_operator_test(action.eq_, operator.eq, 20, 10, False)
 
-    def test_ne(self):
         self.do_operator_test(action.ne_, operator.ne, 20, 10, True)
         self.do_operator_test(action.ne_, operator.ne, 10, 10, False)
 
-    def test_ge(self):
         self.do_operator_test(action.ge_, operator.ge, 10, 20, False)
         self.do_operator_test(action.ge_, operator.ge, 20, 10, True)
         self.do_operator_test(action.ge_, operator.ge, 10, 10, True)
 
-    def test_gt(self):
         self.do_operator_test(action.gt_, operator.gt, 10, 20, False)
         self.do_operator_test(action.gt_, operator.gt, 20, 10, True)
         self.do_operator_test(action.gt_, operator.gt, 10, 10, False)
+
+    def test_mathematical(self):
+        self.do_operator_test(action.add_, operator.add, 10, 20, 30)
+        self.do_operator_test(action.iadd_, operator.iadd, 10, 20, 30)
+
+        self.do_operator_test(action.sub_, operator.sub, 10, 20, -10)
+        self.do_operator_test(action.isub_, operator.isub, 10, 20, -10)
+
+        self.do_operator_test(action.mul_, operator.mul, 10, 20, 200)
+        self.do_operator_test(action.imul_, operator.imul, 10, 20, 200)
+
+        self.do_operator_test(action.floordiv_, operator.floordiv, 100, 33, 3)
+        self.do_operator_test(action.ifloordiv_, operator.ifloordiv, 100, 33, 3)
+
+        self.do_operator_test(action.mod_, operator.mod, 33, 10, 3)
+        self.do_operator_test(action.imod_, operator.imod, 33, 10, 3)
+
+        self.do_operator_test(action.pow_, operator.pow, 10, 3, 1000)
+        self.do_operator_test(action.ipow_, operator.ipow, 10, 3, 1000)
+
+        self.do_operator_test(action.truediv_, operator.truediv, 1, 2, 0.5)
+        self.do_operator_test(action.itruediv_, operator.itruediv, 1, 2, 0.5)
+
+    def test_logical(self):
+        self.do_operator_test(action.and__, operator.and_, 3, 1, 1)
+        self.do_operator_test(action.iand_, operator.iand, 3, 1, 1)
+
+        self.do_operator_test(action.or__, operator.or_, 4, 1, 5)
+        self.do_operator_test(action.ior_, operator.ior, 4, 1, 5)
+
+        self.do_operator_test(action.lshift_, operator.lshift, 15, 2, 60)
+        self.do_operator_test(action.ilshift_, operator.ilshift, 15, 2, 60)
+
+        self.do_operator_test(action.rshift_, operator.rshift, 15, 2, 3)
+        self.do_operator_test(action.irshift_, operator.irshift, 15, 2, 3)
+
+        self.do_operator_test(action.xor_, operator.xor, 3, 7, 4)
+        self.do_operator_test(action.ixor_, operator.ixor, 3, 7, 4)
+
+    def test_container(self):
+        self.do_operator_test(action.contains_, operator.contains, [1, 2], 2, True)
+        self.do_operator_test(action.contains_, operator.contains, [1, 2], 3, False)
+
+        l = [1, 2, 3]
+        self.do_operator_test(action.delitem_, operator.delitem, l, 1, None)
+        self.assertEqual([1, 3], l)
+
+        l = [1, 2, 3]
+        self.do_operator_test(action.getitem_, operator.getitem, l, 1, 2)
+
+
+class MiscOperatorsTestCase(unittest.TestCase):
+
+    def test_set_item(self):
+        self.assertTrue(issubclass(action.setitem_, action.Call))
+        c = action.setitem_(action.p[0], action.p[1], action.p[2])
+        self.assertEqual(operator.setitem, c.func)
+        l = [1, 2, 3]
+        self.assertEqual(None, c.invoke(l, 1, 4))
+        self.assertEqual([1, 4, 3], l)
 
 
 if __name__ == '__main__':

@@ -145,6 +145,7 @@ def func(func):
 pos_ = func(operator.pos)
 neg_ = func(operator.neg)
 invert_ = func(operator.invert)
+abs_ = func(operator.abs)
 
 # Comparison functions
 lt_ = func(operator.lt)
@@ -153,3 +154,39 @@ eq_ = func(operator.eq)
 ne_ = func(operator.ne)
 ge_ = func(operator.ge)
 gt_ = func(operator.gt)
+
+# Mathematical functions
+add_ = func(operator.add)
+iadd_ = func(operator.iadd)
+sub_ = func(operator.sub)
+isub_ = func(operator.isub)
+mul_ = func(operator.mul)
+imul_ = func(operator.imul)
+floordiv_ = func(operator.floordiv)
+ifloordiv_ = func(operator.ifloordiv)
+mod_ = func(operator.mod)
+imod_ = func(operator.imod)
+pow_ = func(operator.pow)
+ipow_ = func(operator.ipow)
+truediv_ = func(operator.truediv)
+itruediv_ = func(operator.itruediv)
+
+# Bitwise functions
+and__ = func(operator.and_)
+iand_ = func(operator.iand)
+or__ = func(operator.or_)
+ior_ = func(operator.ior)
+lshift_ = func(operator.lshift)
+ilshift_ = func(operator.ilshift)
+rshift_ = func(operator.rshift)
+irshift_ = func(operator.irshift)
+xor_ = func(operator.xor)
+ixor_ = func(operator.ixor)
+
+# Container functions
+contains_ = func(operator.contains)
+delitem_ = func(operator.delitem)
+getitem_ = func(operator.getitem)
+setitem_ = func(operator.setitem)
+len_ = func(len)
+iter_ = func(iter)
