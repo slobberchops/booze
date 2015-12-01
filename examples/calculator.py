@@ -15,8 +15,7 @@
 import operator
 
 from booz.gin import *
-
-apply_action = lambda lval, op, rval: op(lval, rval)
+from booz.whiskey import *
 
 arith_op  = Symbols({'+': operator.add,
                      '-': operator.sub})
@@ -32,9 +31,9 @@ value     = Rule()
 exp       = Rule(AttrType.OBJECT)
 calc = exp
 
-mult      %= ((value << mult_op << mult)       [apply_action]
+mult      %= ((value << mult_op << mult)       [p[1](p[0], p[2])]
            | value)
-arith     %= ((mult << arith_op << arith)      [apply_action]
+arith     %= ((mult << arith_op << arith)      [p[1](p[0], p[2])]
            | mult)
 value     %= dec | '(' << exp << ')'
 exp       %= arith

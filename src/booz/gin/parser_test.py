@@ -18,6 +18,7 @@ import io
 import unittest
 
 from booz.gin import parser
+from booz import whiskey
 
 
 class UnusedTestCase(unittest.TestCase):
@@ -487,6 +488,25 @@ class SemanticActionTestCase(unittest.TestCase):
         s = io.StringIO('b')
         self.assertEqual((True, 'bb'), p.parse(s))
         self.assertEqual(1, s.tell())
+
+    def test_parse_whiskey_action(self):
+        class Action(whiskey.Action):
+            args = None
+            kwargs = None
+
+            def invoke(self, *args, **kwargs):
+                self.args = args
+                self.kwargs = kwargs
+                return 'invoked'
+
+        a = Action()
+        p = parser.SemanticAction((parser.Char('abc') << parser.Char('def')), a)
+        s = io.StringIO('be')
+        self.assertEqual((True, 'invoked'), p.parse(s))
+        self.assertEqual(2, s.tell())
+
+        self.assertEqual(('b', 'e'), a.args)
+        self.assertEqual({}, a.kwargs)
 
     def test_parse_fail(self):
         p = parser.SemanticAction(parser.Char('abc'), lambda v: v + v)

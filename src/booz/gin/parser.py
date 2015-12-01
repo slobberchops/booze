@@ -17,6 +17,7 @@ import enum
 import io
 
 from .. import util
+from .. import whiskey
 
 
 @util.singleton
@@ -377,7 +378,10 @@ class SemanticAction(Unary):
                 params = ()
             else:
                 params = state.value if isinstance(state.value, tuple) else (state.value,)
-            state.value = self.__func(*params)
+            if isinstance(self.__func, whiskey.Action):
+                state.value = self.__func.invoke(*params)
+            else:
+                state.value = self.__func(*params)
 
 
 class Symbols(Parser):
