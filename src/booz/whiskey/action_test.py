@@ -53,7 +53,7 @@ class ActionTestCase(unittest.TestCase):
         self.assertIsInstance(c, action.Call)
         self.assertIs(self.action1, c.func)
         self.assertEqual((1, 2, 3), c.args)
-        self.assertEqual({'a': 'a', 'b':'b', 'c':'c'}, c.kwargs)
+        self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'}, c.kwargs)
 
     def do_unary_test(self, action_impl, operator_func):
         instance = operator_func(self.action1)
@@ -203,7 +203,7 @@ class PTestCase(unittest.TestCase):
 class CallTestCase(unittest.TestCase):
 
     def test_func(self):
-        f = lambda: None
+        def f(): return None
         self.assertEqual(f, action.Call(f).func)
 
     def test_args(self):
@@ -218,7 +218,7 @@ class CallTestCase(unittest.TestCase):
         self.assertEqual('a', call.kwargs['a'])
 
     def test_invoke_constants(self):
-        f = lambda p, *, a: (p, a)
+        def f(p, a): return p, a
         call = action.Call(f, 1, a='a')
         self.assertEqual((1, 'a'), call.invoke(10, a='aa'))
 

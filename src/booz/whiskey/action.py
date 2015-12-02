@@ -182,8 +182,8 @@ class p:
 
 class Call(Action):
 
-    def __init__(self, func, *args, **kwargs):
-        self.__func = func
+    def __init__(self, real_func, *args, **kwargs):
+        self.__func = real_func
         self.__args = args
         self.__kwargs = kwargs
 
@@ -200,19 +200,19 @@ class Call(Action):
         return dict(self.__kwargs)
 
     def invoke(self, *args, **kwargs):
-        func = invoke(self.__func, *args, **kwargs)
+        real_func = invoke(self.__func, *args, **kwargs)
         args = [invoke(a, *args, **kwargs) for a in self.args]
         kwargs = {k: invoke(v, *args, **kwargs) for k, v in self.kwargs.items()}
-        return func(*args, **kwargs)
+        return real_func(*args, **kwargs)
 
 
-def func(func):
+def func(real_func):
     class Func(Call):
 
-        __func__ = func
+        __func__ = real_func
 
         def __init__(self, *args, **kwargs):
-            super(Func, self).__init__(func, *args, **kwargs)
+            super(Func, self).__init__(real_func, *args, **kwargs)
     return Func
 
 

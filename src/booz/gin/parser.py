@@ -26,7 +26,8 @@ class UNUSED:
     def __repr__(self):
         return 'UNUSED'
 
-    def __bool__(self):
+    @staticmethod
+    def __bool__():
         return False
 
 

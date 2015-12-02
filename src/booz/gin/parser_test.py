@@ -229,7 +229,7 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual((True, 'b'), p.parse(s))
 
     def test_getitem(self):
-        func = lambda v: v + v
+        def func(v): return v + v
         p1 = parser.Parser()
         p2 = p1[func]
         self.assertEqual(p1, p2.parser)
@@ -523,12 +523,12 @@ class SemanticActionTestCase(unittest.TestCase):
         self.assertEqual((True, 'Ab'), p.parse('ab'))
 
     def test_func(self):
-        f = lambda v: v + v
+        def f(v): return v + v
         p = parser.SemanticAction(parser.Char('abc'), f)
         self.assertEqual(f, p.func)
 
     def test_attr_type(self):
-        f = lambda v: v + v
+        def f(v): return v + v
         p = parser.SemanticAction(parser.Char('abc'), f, parser.AttrType.STRING)
         self.assertEqual(parser.AttrType.STRING, p.attr_type)
 
@@ -595,7 +595,7 @@ class DirectiveParserTest(unittest.TestCase):
         self.assertIsInstance(p.state, parser.ParserState)
         self.assertTrue(p.post)
 
-    def test_parse(self):
+    def test_parse_fail(self):
         p = self.Directive(parser.Char('a'))
         s = io.StringIO('xyz')
         self.assertEqual((False, None), p.parse(s))

@@ -39,12 +39,13 @@ exp       %= arith
 
 if __name__ == '__main__':
     import io
-    def print_calc(string, parser=calc):
-        s = io.StringIO(string)
-        print (string, '=', parser.parse(s, ' ')[1])
+
+    def print_calc(unparsed_string, calc_parser=calc):
+        s = io.StringIO(unparsed_string)
+        prin (unparsed_string, '=', calc_parser.parse(s, ' ')[1])
         remaining = s.read()
         if remaining:
-            print ('Parse Error: ' + remaining)
+            print('Parse Error: ' + remaining)
 
     print_calc('1')
     print_calc('1 + 1')

@@ -25,11 +25,11 @@ class Rule(parser.Parser):
             return self.__expected_attr_type
         else:
             try:
-                parser = self.__parser
+                inner_parser = self.__parser
             except AttributeError:
                 raise NotImplementedError
             else:
-                return parser.attr_type
+                return inner_parser.attr_type
 
     @property
     def parser(self):

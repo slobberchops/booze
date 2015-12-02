@@ -44,17 +44,17 @@ class FuncCharTestCase(unittest.TestCase):
 
 class CharClassTestCase(unittest.TestCase):
 
-    def do_test(self, parser, good, bad):
+    def do_test(self, test_parser, good, bad):
         for c in good:
             s = c + c
-            self.assertEqual((True, c), parser.parse(s))
+            self.assertEqual((True, c), test_parser.parse(s))
 
         for c in bad:
             s = c + c
-            self.assertEqual((False, None), parser.parse(s))
+            self.assertEqual((False, None), test_parser.parse(s))
 
     def test_alnum(self):
-        self.do_test(chars.alnum, 'aA0', ('_->'))
+        self.do_test(chars.alnum, 'aA0', '_->')
 
     def test_alpha(self):
         self.do_test(chars.alpha, 'aA', '0_->')
@@ -80,7 +80,6 @@ class CharClassTestCase(unittest.TestCase):
 
     def test_xdigit(self):
         self.do_test(chars.xdigit, '123abcABC', 'xyz')
-
 
 
 if __name__ == '__main__':

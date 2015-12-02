@@ -21,6 +21,7 @@ def singleton(cls):
 
 def calculated_property(method):
     cached_value_name = '_cached_' + method.__name__
+
     @property
     @functools.wraps(method)
     def calculated_wrapper(self):

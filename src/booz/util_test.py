@@ -29,7 +29,7 @@ class SingletonTestCase(unittest.TestCase):
 
 class CalculatedPropertyTestCase(unittest.TestCase):
 
-    def test_caclulated_property(self):
+    def test_calculated_property(self):
         class Cls:
 
             call_count = 0
