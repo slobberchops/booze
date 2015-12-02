@@ -52,11 +52,11 @@ class ParserState:
         def __init__(self, pos):
             self.pos = pos
 
-    def __init__(self, input, skipper=None):
-        if isinstance(input, str):
-            self.__input = io.StringIO(input)
+    def __init__(self, state_input, skipper=None):
+        if isinstance(state_input, str):
+            self.__input = io.StringIO(state_input)
         else:
-            self.__input = input
+            self.__input = state_input
         self.skipper = skipper
         self.__txs = []
 
@@ -165,12 +165,12 @@ class Parser:
     def attr_type(self):
         raise NotImplementedError
 
-    def parse(self, input, skipper=None):
-        if skipper is not None and isinstance(input, ParserState):
+    def parse(self, parser_input, skipper=None):
+        if skipper is not None and isinstance(parser_input, ParserState):
             raise TypeError('May not provide ParserState and new skipper')
-        if not isinstance(input, ParserState):
-            input = ParserState(input, skipper)
-        with input as state:
+        if not isinstance(parser_input, ParserState):
+            parser_input = ParserState(parser_input, skipper)
+        with parser_input as state:
             if state.skipper:
                 status = True
                 skipper = state.skipper
@@ -289,7 +289,6 @@ class Seq(AggregateParser):
             return all_types[0]
         else:
             return all_types
-
 
     def _parse(self, state):
         values = []
@@ -497,10 +496,8 @@ def post_directive(attr_type=None):
             yield
             if state.successful:
                 post_func(state)
-            return False
         return directive
     return post_directive_decorator
-
 
 
 @directive_class
@@ -582,7 +579,6 @@ def object_lexeme(state):
     state.skipper = None
     yield
     state.skipper = skipper
-    return False
 
 
 @util.singleton
@@ -590,41 +586,6 @@ class lexeme:
 
     def __getitem__(self, parser):
         return as_string[object_lexeme[parser]]
-
-
-class Rule(Parser):
-
-    def __init__(self, expected_attr_type=None):
-        self.__expected_attr_type = expected_attr_type
-
-    @property
-    def attr_type(self):
-        if self.__expected_attr_type:
-            return self.__expected_attr_type
-        else:
-            try:
-                parser = self.__parser
-            except AttributeError:
-                raise NotImplementedError
-            else:
-                return parser.attr_type
-
-    @property
-    def parser(self):
-        return self.__parser
-
-    @parser.setter
-    def parser(self, parser):
-        if self.__expected_attr_type and self.__expected_attr_type != parser.attr_type:
-            raise ValueError('Unexpected attribute type')
-        self.__parser = as_parser(parser)
-
-    def _parse(self, state):
-        return self.__parser._parse(state)
-
-    def __imod__(self, other):
-        self.parser = other
-        return self
 
 
 @post_directive(AttrType.UNUSED)

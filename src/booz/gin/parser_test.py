@@ -14,11 +14,10 @@
 
 import contextlib
 import io
-
 import unittest
 
-from booz.gin import parser
 from booz import whiskey
+from booz.gin import parser
 
 
 class UnusedTestCase(unittest.TestCase):
@@ -909,56 +908,6 @@ class LexemeTestCase(unittest.TestCase):
     def test_attr_type(self):
         self.assertEqual(parser.AttrType.STRING, parser.lexeme[parser.Char('a')].attr_type)
         self.assertEqual(parser.AttrType.STRING, parser.lexeme[parser.lit('a')].attr_type)
-
-
-class RuleTestCase(unittest.TestCase):
-
-    def test_default_state(self):
-        r = parser.Rule()
-        with self.assertRaises(AttributeError):
-            r.parse('')
-
-    def test_parse(self):
-        r = parser.Rule()
-        r %= 'hello'
-        self.assertEqual((True, parser.UNUSED), r.parse('hello'))
-
-    def test_set_parser(self):
-        p = parser.Parser()
-        r = parser.Rule()
-        r.parser = p
-        self.assertEqual(p, r.parser)
-
-    def test_set_bad_parser(self):
-        r = parser.Rule()
-        with self.assertRaises(TypeError):
-            r.parser = object()
-
-    def test_uninitialized_attr_type(self):
-        with self.assertRaises(NotImplementedError):
-            parser.Rule().attr_type
-
-    def test_initialized_attr_type(self):
-        r = parser.Rule()
-        r %= parser.Char('a')
-        self.assertEqual(parser.AttrType.STRING, r.attr_type)
-        r %= parser.lit('a')
-        self.assertEqual(parser.AttrType.UNUSED, r.attr_type)
-
-    def test_expected_attr_type(self):
-        r = parser.Rule(parser.AttrType.STRING)
-        self.assertEqual(parser.AttrType.STRING, r.attr_type)
-
-    def test_assign_to_expected_attr(self):
-        r = parser.Rule(parser.AttrType.STRING)
-        r %= parser.Char('a')
-        self.assertEqual(parser.AttrType.STRING, r.attr_type)
-
-    def test_illegal_assign_to_expected_attr(self):
-        r = parser.Rule(parser.AttrType.STRING)
-        p = parser.lit('a')
-        with self.assertRaises(ValueError):
-            r %= p
 
 
 class PredicateTestCase(unittest.TestCase):

@@ -15,3 +15,4 @@
 from booz.gin.aux import *
 from booz.gin.chars import *
 from booz.gin.parser import *
+from booz.gin.rule import *

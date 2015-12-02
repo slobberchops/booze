@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import operator
-
 from booz.gin import *
+from booz.gin.rule import Rule
 from booz.whiskey import *
 
 arith_op  = Symbols({'+': operator.add,
