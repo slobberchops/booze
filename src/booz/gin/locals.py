@@ -30,6 +30,31 @@ class GetAttr(whiskey.Action):
             raise TypeError('Must provide \'locals\' parameter')
         return getattr(locals, whiskey.invoke(self.__name, *args, locals=locals, **kwargs))
 
+    def __getitem__(self, value):
+        return SetAttr(self.__name, value)
+
+
+class SetAttr(whiskey.Action):
+
+    def __init__(self, name, value):
+        self.__name = name
+        self.__value = value
+
+    @property
+    def name(self):
+        return self.__name
+
+    @property
+    def value(self):
+        return self.__value
+
+    def invoke(self, *args, locals = None, **kwargs):
+        if locals is None:
+            raise TypeError('Must provide \'locals\' parameter')
+        value = whiskey.invoke(self.__value)
+        setattr(locals, whiskey.invoke(self.__name), value)
+        return value
+
 
 @util.singleton
 class l:

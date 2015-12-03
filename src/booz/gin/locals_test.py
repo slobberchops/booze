@@ -24,7 +24,13 @@ class MyNameAction(action.Action):
         return 'my_name'
 
 
-class SetAttrTestCase(unittest.TestCase):
+class MyValueAction(action.Action):
+
+    def invoke(self, *args, **kwargs):
+        return 10
+
+
+class GetAttrTestCase(unittest.TestCase):
 
     action = locals.GetAttr('my_name')
 
@@ -56,12 +62,54 @@ class SetAttrTestCase(unittest.TestCase):
         self.assertEqual(10, test_action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
 
 
+class SetAttrTestCase(unittest.TestCase):
+
+    action = locals.SetAttr('my_name', 10)
+
+    def test_name(self):
+        self.assertEqual('my_name', self.action.name)
+
+    def test_value(self):
+        self.assertEqual(10, self.action.value)
+
+    def test_invoke_with_no_locals(self):
+        with self.assertRaises(TypeError):
+            self.action.invoke(1, 2, 3, a='a', b='b', c='c')
+
+    def test_invoke_not_found(self):
+        with self.assertRaises(AttributeError):
+            self.action.invoke(1, 2, 3, a='a', b='b', c='c', locals=object())
+
+    def test_invoke(self):
+        class SimpleLocals:
+            pass
+        locals_instance = SimpleLocals()
+        self.assertEqual(10, self.action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
+        self.assertEqual(10, locals_instance.my_name)
+
+    def test_invoke_name_and_value_action(self):
+        name_action = MyNameAction()
+        value_action = MyValueAction()
+        test_action = locals.SetAttr(name_action, value_action)
+        class SimpleLocals:
+            pass
+        locals_instance = SimpleLocals()
+        self.assertEqual(10, test_action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
+        self.assertEqual(10, locals_instance.my_name)
+
+
 class LTestCase(unittest.TestCase):
 
     def test_get_attr(self):
         action = locals.l.my_name
         self.assertIsInstance(action, locals.GetAttr)
         self.assertEqual('my_name', action.name)
+
+    def test_set_attr(self):
+        action = locals.l.my_name[10]
+        self.assertIsInstance(action, locals.SetAttr)
+        self.assertEqual('my_name', action.name)
+        self.assertEqual(10, action.value)
 
 
 if __name__ == '__main__':
