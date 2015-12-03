@@ -15,6 +15,13 @@
 import unittest
 
 from booz.gin import locals
+from booz.whiskey import action
+
+
+class MyNameAction(action.Action):
+
+    def invoke(self, *args, **kwargs):
+        return 'my_name'
 
 
 class SetAttrTestCase(unittest.TestCase):
@@ -35,9 +42,18 @@ class SetAttrTestCase(unittest.TestCase):
     def test_invoke(self):
         class SimpleLocals:
             pass
-        locals = SimpleLocals()
-        locals.my_name = 10
-        self.assertEqual(10, self.action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals))
+        locals_instance = SimpleLocals()
+        locals_instance.my_name = 10
+        self.assertEqual(10, self.action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
+
+    def test_invoke_name_action(self):
+        name_action = MyNameAction()
+        test_action = locals.GetAttr(name_action)
+        class SimpleLocals:
+            pass
+        locals_instance = SimpleLocals()
+        locals_instance.my_name = 10
+        self.assertEqual(10, test_action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
 
 
 class LTestCase(unittest.TestCase):

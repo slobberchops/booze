@@ -28,7 +28,7 @@ class GetAttr(whiskey.Action):
     def invoke(self, *args, locals=None, **kwargs):
         if locals is None:
             raise TypeError('Must provide \'locals\' parameter')
-        return getattr(locals, self.__name)
+        return getattr(locals, whiskey.invoke(self.__name, *args, locals=locals, **kwargs))
 
 
 @util.singleton
