@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from booz.gin import *
-from booz.gin.rule import Rule
 from booz.whiskey import *
 
 arith_op  = Symbols({'+': operator.add,
@@ -42,7 +41,7 @@ if __name__ == '__main__':
 
     def print_calc(unparsed_string, calc_parser=calc):
         s = io.StringIO(unparsed_string)
-        prin (unparsed_string, '=', calc_parser.parse(s, ' ')[1])
+        print(unparsed_string, '=', calc_parser.parse(s, ' ')[1])
         remaining = s.read()
         if remaining:
             print('Parse Error: ' + remaining)
