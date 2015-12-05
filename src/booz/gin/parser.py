@@ -124,7 +124,7 @@ class ParserState:
     @contextlib.contextmanager
     def open_scope(self, *args, **kwargs):
         previous_scope = self.__scope
-        self.__scope = local_vars.LocalScope()
+        self.__scope = local_vars.LocalScope(*args, **kwargs)
         yield self.__scope
         self.__scope = previous_scope
 

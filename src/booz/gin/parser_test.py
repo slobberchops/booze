@@ -138,7 +138,6 @@ class ParserStateTestCase(unittest.TestCase):
         self.assertIsNone(self.state.scope)
         with self.state.open_scope(1, 2, 3, a='a', b='b', c='c') as scope:
             self.assertIsInstance(scope, local_vars.LocalScope)
-            self.assertSequenceEqual((), tuple(scope))
             self.assertSequenceEqual((1, 2, 3), scope.args)
             self.assertDictEqual({'a': 'a', 'b': 'b', 'c': 'c'}, scope.kwargs)
         self.assertIsNone(self.state.scope)
@@ -243,7 +242,7 @@ class ParserTestCase(unittest.TestCase):
         p1 = parser.Parser()
         p2 = p1[func]
         self.assertEqual(p1, p2.parser)
-        self.assertEqual(func, p2.predicate)
+        self.assertEqual(func, p2.func)
 
     def test_neg(self):
         p1 = parser.Parser()
