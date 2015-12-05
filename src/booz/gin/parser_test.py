@@ -58,11 +58,11 @@ class ParserStateTestCase(unittest.TestCase):
         self.state = parser.ParserState(self.input)
 
     def test_initial_state(self):
-        with self.assertRaises(IndexError):
+        with self.assertRaises(AttributeError):
             self.state.committed
-        with self.assertRaises(IndexError):
+        with self.assertRaises(AttributeError):
             self.state.successful
-        with self.assertRaises(IndexError):
+        with self.assertRaises(AttributeError):
             self.state.value
 
     def test_string_in_constructor(self):
@@ -70,7 +70,7 @@ class ParserStateTestCase(unittest.TestCase):
         self.assertEqual('input', self.state.read())
 
     def test_read_and_rollback(self):
-        with self.state:
+        with self.state.open_transaction():
             self.assertEqual('a', self.state.read(1))
             self.assertEqual(1, self.input.tell())
             self.assertEqual('b', self.state.read(1))
@@ -82,7 +82,7 @@ class ParserStateTestCase(unittest.TestCase):
         self.assertEqual(0, self.input.tell())
 
     def test_read_and_commit(self):
-        with self.state:
+        with self.state.open_transaction():
             self.assertEqual('a', self.state.read(1))
             self.assertEqual(1, self.input.tell())
             self.assertEqual('b', self.state.read(1))
@@ -97,18 +97,18 @@ class ParserStateTestCase(unittest.TestCase):
         self.assertEqual(3, self.input.tell())
 
     def test_commit_no_transaction(self):
-        with self.assertRaises(IndexError):
+        with self.assertRaises(AttributeError):
             self.state.commit('not ready')
 
     def test_commit(self):
-        with self.state:
+        with self.state.open_transaction():
             self.state.commit('a value')
             self.assertTrue(self.state.committed)
             self.assertTrue(self.state.successful)
             self.assertEqual('a value', self.state.value)
 
     def test_uncommit(self):
-        with self.state:
+        with self.state.open_transaction():
             self.state.commit('a value')
             self.state.uncommit()
             self.assertFalse(self.state.committed)
@@ -116,14 +116,14 @@ class ParserStateTestCase(unittest.TestCase):
             self.assertEqual('a value', self.state.value)
 
     def test_set_value(self):
-        with self.state:
+        with self.state.open_transaction():
             self.state.value = 'a value'
             self.assertFalse(self.state.committed)
             self.assertTrue(self.state.successful)
             self.assertEqual('a value', self.state.value)
 
     def test_rollback(self):
-        with self.state:
+        with self.state.open_transaction():
             self.state.commit('a value')
             self.state.rollback()
             self.assertFalse(self.state.committed)

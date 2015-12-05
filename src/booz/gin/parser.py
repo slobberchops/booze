@@ -61,7 +61,7 @@ class ParserState:
         else:
             self.__input = state_input
         self.skipper = skipper
-        self.__txs = []
+        self.__tx = None
         self.__scope = None
 
     @property
@@ -79,7 +79,7 @@ class ParserState:
 
     @property
     def _tx(self):
-        return self.__txs[-1]
+        return self.__tx
 
     @property
     def committed(self):
@@ -125,20 +125,21 @@ class ParserState:
     def open_scope(self, *args, **kwargs):
         previous_scope = self.__scope
         self.__scope = local_vars.LocalScope(*args, **kwargs)
-        yield self.__scope
-        self.__scope = previous_scope
+        try:
+            yield self.__scope
+        finally:
+            self.__scope = previous_scope
 
-    # TODO: Move this to a function similar to open_scope().
-    def __enter__(self):
-        pos = self.__input.tell()
-        self.__txs.append(self.__Tx(pos))
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if not self.committed:
-            self.__input.seek(self._tx.pos)
-        del self.__txs[-1]
-        return False
+    @contextlib.contextmanager
+    def open_transaction(self):
+        tx = self._tx
+        self.__tx = ParserState.__Tx(self.__input.tell())
+        try:
+            yield self
+        finally:
+            if not self.committed:
+                self.__input.seek(self._tx.pos)
+            self.__tx = tx
 
 
 class AttrType(enum.Enum):
@@ -186,14 +187,14 @@ class Parser:
             raise TypeError('May not provide ParserState and new skipper')
         if not isinstance(parser_input, ParserState):
             parser_input = ParserState(parser_input, skipper)
-        with parser_input as state:
+        with parser_input.open_transaction() as state:
             if state.skipper:
                 status = True
                 skipper = state.skipper
                 state.skipper = None
                 try:
                     while status:
-                        with state:
+                        with state.open_transaction():
                             status, _ = skipper.parse(state)
                             if status:
                                 state.commit()
@@ -548,7 +549,7 @@ class Repeat(Unary):
         count = 0
         values = []
         while self.__maximum is None or count < self.__maximum:
-            with state as next_state:
+            with state.open_transaction() as next_state:
                 super(Repeat.__parser_type__, self)._parse(next_state)
                 if next_state.successful:
                     values.append(next_state.value)
@@ -594,8 +595,10 @@ def lit(string):
 def object_lexeme(state):
     skipper = state.skipper
     state.skipper = None
-    yield
-    state.skipper = skipper
+    try:
+        yield
+    finally:
+        state.skipper = skipper
 
 
 @util.singleton
