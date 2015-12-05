@@ -41,10 +41,38 @@ class Rule(parser.Parser):
             raise ValueError('Unexpected attribute type')
         self.__parser = parser.as_parser(value)
 
-    def _parse(self, state):
-        with state.open_scope():
-            return self.__parser._parse(state)
+    def _parse(self, state, *args, **kwargs):
+        with state.open_scope(*args, **kwargs):
+            self.__parser._parse(state)
 
     def __imod__(self, other):
         self.parser = other
         return self
+
+    def __call__(self, *args, **kwargs):
+        return RuleCall(self, *args, **kwargs)
+
+
+class RuleCall(parser.Parser):
+
+    def __init__(self, rule, *args, **kwargs):
+        if not isinstance(rule, Rule):
+            raise TypeError('Expected rule to be type Rule, was {}'.format(type(rule).__name__))
+        self.__rule = rule
+        self.__args = args
+        self.__kwargs = kwargs
+
+    @property
+    def rule(self):
+        return self.__rule
+
+    @property
+    def args(self):
+        return self.__args
+
+    @property
+    def kwargs(self):
+        return dict(self.__kwargs)
+
+    def _parse(self, state):
+        self.__rule._parse(state, *self.__args, **self.__kwargs)
