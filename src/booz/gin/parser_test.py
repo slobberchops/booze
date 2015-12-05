@@ -241,7 +241,7 @@ class ParserTestCase(unittest.TestCase):
         p1 = parser.Parser()
         p2 = p1[func]
         self.assertEqual(p1, p2.parser)
-        self.assertEqual(func, p2.func)
+        self.assertEqual(func, p2.predicate)
 
     def test_neg(self):
         p1 = parser.Parser()

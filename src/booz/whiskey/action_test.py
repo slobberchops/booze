@@ -244,7 +244,7 @@ class FuncTestCase(unittest.TestCase):
         self.assertTrue(issubclass(self.f_action, action.Call))
         self.assertEqual(self.f, self.f_action.__func__)
         c = self.f_action(1, 2, 3, a='a', b='b', c='c')
-        self.assertEqual(self.f, c.func)
+        self.assertEqual(self.f, c.predicate)
         self.assertEqual((1, 2, 3), c.args)
         self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'}, c.kwargs)
 
@@ -265,7 +265,7 @@ class UnaryOperatorsTestCase(unittest.TestCase):
     def do_operator_test(self, action_impl, operator_func, value, result):
         self.assertTrue(issubclass(action_impl, action.Call))
         c = action_impl(action.p[0])
-        self.assertEqual(operator_func, c.func)
+        self.assertEqual(operator_func, c.predicate)
         self.assertEqual(result, c.invoke(value))
 
     def test_operators(self):
@@ -279,7 +279,7 @@ class BinaryOperatorsTestCase(unittest.TestCase):
     def do_operator_test(self, action_impl, operator_func, lvalue, rvalue, result):
         self.assertTrue(issubclass(action_impl, action.Call))
         c = action_impl(action.p[0], action.p[1])
-        self.assertEqual(operator_func, c.func)
+        self.assertEqual(operator_func, c.predicate)
         self.assertEqual(result, c.invoke(lvalue, rvalue))
 
     def test_comparison(self):

@@ -19,11 +19,11 @@ from booz.gin import chars
 from booz.gin import parser
 
 
-class FuncCharTestCase(unittest.TestCase):
+class PredicateCharTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.func = lambda c: ord(c) % 2
-        self.parser = chars.FuncChar(self.func)
+        self.predicate = lambda c: ord(c) % 2
+        self.parser = chars.PredicateChar(self.predicate)
 
     def test_parse(self):
         s = io.StringIO('a')
@@ -38,8 +38,8 @@ class FuncCharTestCase(unittest.TestCase):
     def test_attr_type(self):
         self.assertEqual(parser.AttrType.STRING, self.parser.attr_type)
 
-    def test_func(self):
-        self.assertEqual(self.func, self.parser.func)
+    def test_predicate(self):
+        self.assertEqual(self.predicate, self.parser.predicate)
 
 
 class CharClassTestCase(unittest.TestCase):

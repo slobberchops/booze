@@ -17,7 +17,8 @@ import string
 from . import parser
 
 
-class FuncChar(parser.Parser):
+class PredicateChar(parser.Parser):
+    """Character parser that determines character inclusion using predicate."""
 
     def __init__(self, func):
         self.__func = func
@@ -27,7 +28,7 @@ class FuncChar(parser.Parser):
         return parser.AttrType.STRING
 
     @property
-    def func(self):
+    def predicate(self):
         return self.__func
 
     def _parse(self, state):
@@ -36,13 +37,13 @@ class FuncChar(parser.Parser):
             state.commit(c)
 
 
-alnum = FuncChar(str.isalnum)
-alpha = FuncChar(str.isalpha)
+alnum = PredicateChar(str.isalnum)
+alpha = PredicateChar(str.isalpha)
 blank = parser.Char(' \t')
-digit = FuncChar(str.isdigit)
-lower = FuncChar(str.islower)
-printable = FuncChar(str.isprintable)
+digit = PredicateChar(str.isdigit)
+lower = PredicateChar(str.islower)
+printable = PredicateChar(str.isprintable)
 print_ = printable
-space = FuncChar(str.isspace)
-upper = FuncChar(str.isupper)
+space = PredicateChar(str.isspace)
+upper = PredicateChar(str.isupper)
 xdigit = parser.Char(string.hexdigits)
