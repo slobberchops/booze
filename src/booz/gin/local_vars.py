@@ -65,7 +65,14 @@ class l:
 
 class LocalScope:
 
-    def __iter__(self):
-        for name in dir(self):
-            if not (name.startswith('__') or name.startswith('_LocalScope')):
-                yield name, getattr(self, name)
+    def __init__(self, *args, **kwargs):
+        self.__args = args
+        self.__kwargs = kwargs
+
+    @property
+    def args(self):
+        return self.__args
+
+    @property
+    def kwargs(self):
+        return dict(self.__kwargs)

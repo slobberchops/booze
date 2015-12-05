@@ -112,16 +112,20 @@ class LTestCase(unittest.TestCase):
         self.assertEqual(10, action.value)
 
 
-class ScopeTest(unittest.TestCase):
+class LocalScopeTest(unittest.TestCase):
 
-    def test_iter_empty(self):
-        self.assertEqual((), tuple(iter(local_vars.LocalScope())))
+    def test_args(self):
+        scope = local_vars.LocalScope(1, 2, 3)
+        self.assertSequenceEqual((1, 2, 3), scope.args)
 
-    def test_iter_values(self):
-        scope = local_vars.LocalScope()
-        scope.a = 10
-        scope.b = 20
-        self.assertSequenceEqual((('a', 10), ('b', 20)), tuple(iter(scope)))
+    def test_kwargs(self):
+        scope = local_vars.LocalScope(a='a', b='b', c='c')
+        self.assertDictEqual({'a': 'a', 'b': 'b', 'c': 'c'}, scope.kwargs)
+
+    def test_kwargs_immutable(self):
+        scope = local_vars.LocalScope(a='a', b='b', c='c')
+        scope.kwargs['a'] = 'aa'
+        self.assertDictEqual({'a': 'a', 'b': 'b', 'c': 'c'}, scope.kwargs)
 
 
 if __name__ == '__main__':
