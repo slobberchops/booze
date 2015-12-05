@@ -14,7 +14,7 @@
 
 import unittest
 
-from booz.gin import locals
+from booz.gin import local_vars
 from booz.whiskey import action
 
 
@@ -32,7 +32,7 @@ class MyValueAction(action.Action):
 
 class GetAttrTestCase(unittest.TestCase):
 
-    action = locals.GetAttr('my_name')
+    action = local_vars.GetAttr('my_name')
 
     def test_name(self):
         self.assertEqual('my_name', self.action.name)
@@ -54,7 +54,7 @@ class GetAttrTestCase(unittest.TestCase):
 
     def test_invoke_name_action(self):
         name_action = MyNameAction()
-        test_action = locals.GetAttr(name_action)
+        test_action = local_vars.GetAttr(name_action)
         class SimpleLocals:
             pass
         locals_instance = SimpleLocals()
@@ -64,7 +64,7 @@ class GetAttrTestCase(unittest.TestCase):
 
 class SetAttrTestCase(unittest.TestCase):
 
-    action = locals.SetAttr('my_name', 10)
+    action = local_vars.SetAttr('my_name', 10)
 
     def test_name(self):
         self.assertEqual('my_name', self.action.name)
@@ -90,7 +90,7 @@ class SetAttrTestCase(unittest.TestCase):
     def test_invoke_name_and_value_action(self):
         name_action = MyNameAction()
         value_action = MyValueAction()
-        test_action = locals.SetAttr(name_action, value_action)
+        test_action = local_vars.SetAttr(name_action, value_action)
         class SimpleLocals:
             pass
         locals_instance = SimpleLocals()
@@ -101,13 +101,13 @@ class SetAttrTestCase(unittest.TestCase):
 class LTestCase(unittest.TestCase):
 
     def test_get_attr(self):
-        action = locals.l.my_name
-        self.assertIsInstance(action, locals.GetAttr)
+        action = local_vars.l.my_name
+        self.assertIsInstance(action, local_vars.GetAttr)
         self.assertEqual('my_name', action.name)
 
     def test_set_attr(self):
-        action = locals.l.my_name[10]
-        self.assertIsInstance(action, locals.SetAttr)
+        action = local_vars.l.my_name[10]
+        self.assertIsInstance(action, local_vars.SetAttr)
         self.assertEqual('my_name', action.name)
         self.assertEqual(10, action.value)
 
@@ -115,10 +115,10 @@ class LTestCase(unittest.TestCase):
 class ScopeTest(unittest.TestCase):
 
     def test_iter_empty(self):
-        self.assertEqual((), tuple(iter(locals.LocalScope())))
+        self.assertEqual((), tuple(iter(local_vars.LocalScope())))
 
     def test_iter_values(self):
-        scope = locals.LocalScope()
+        scope = local_vars.LocalScope()
         scope.a = 10
         scope.b = 20
         self.assertSequenceEqual((('a', 10), ('b', 20)), tuple(iter(scope)))

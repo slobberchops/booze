@@ -14,6 +14,6 @@
 
 from booz.gin.aux import *
 from booz.gin.chars import *
-from booz.gin.locals import *
+from booz.gin.local_vars import *
 from booz.gin.parser import *
 from booz.gin.rule import *

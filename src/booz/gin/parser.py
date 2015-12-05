@@ -17,7 +17,7 @@ import enum
 import inspect
 import io
 
-from . import locals
+from . import local_vars
 from .. import util
 from .. import whiskey
 
@@ -124,7 +124,7 @@ class ParserState:
     @contextlib.contextmanager
     def open_scope(self):
         previous_scope = self.__scope
-        self.__scope = locals.LocalScope()
+        self.__scope = local_vars.LocalScope()
         yield self.__scope
         self.__scope = previous_scope
 

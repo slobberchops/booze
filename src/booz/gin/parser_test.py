@@ -17,7 +17,7 @@ import io
 import unittest
 
 from booz import whiskey
-from booz.gin import locals
+from booz.gin import local_vars
 from booz.gin import parser
 
 
@@ -137,7 +137,7 @@ class ParserStateTestCase(unittest.TestCase):
     def test_scope(self):
         self.assertIsNone(self.state.scope)
         with self.state.open_scope() as scope:
-            self.assertIsInstance(scope, locals.LocalScope)
+            self.assertIsInstance(scope, local_vars.LocalScope)
             self.assertSequenceEqual((), tuple(scope))
         self.assertIsNone(self.state.scope)
 
