@@ -122,7 +122,7 @@ class ParserState:
         self._tx.commit = False
 
     @contextlib.contextmanager
-    def open_scope(self):
+    def open_scope(self, *args, **kwargs):
         previous_scope = self.__scope
         self.__scope = local_vars.LocalScope()
         yield self.__scope
