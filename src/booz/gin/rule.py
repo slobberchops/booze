@@ -42,7 +42,8 @@ class Rule(parser.Parser):
         self.__parser = parser.as_parser(value)
 
     def _parse(self, state):
-        return self.__parser._parse(state)
+        with state.open_scope():
+            return self.__parser._parse(state)
 
     def __imod__(self, other):
         self.parser = other

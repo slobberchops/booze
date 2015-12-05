@@ -17,6 +17,7 @@ import io
 import unittest
 
 from booz import whiskey
+from booz.gin import locals
 from booz.gin import parser
 
 
@@ -132,6 +133,13 @@ class ParserStateTestCase(unittest.TestCase):
     def test_bad_skipper(self):
         with self.assertRaises(TypeError):
             parser.ParserState(' ', object())
+
+    def test_scope(self):
+        self.assertIsNone(self.state.scope)
+        with self.state.open_scope() as scope:
+            self.assertIsInstance(scope, locals.LocalScope)
+            self.assertSequenceEqual((), tuple(scope))
+        self.assertIsNone(self.state.scope)
 
 
 class AttrTypeTestCase(unittest.TestCase):

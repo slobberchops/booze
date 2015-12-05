@@ -14,8 +14,10 @@
 
 import contextlib
 import enum
+import inspect
 import io
 
+from . import locals
 from .. import util
 from .. import whiskey
 
@@ -60,6 +62,7 @@ class ParserState:
             self.__input = state_input
         self.skipper = skipper
         self.__txs = []
+        self.__scope = None
 
     @property
     def skipper(self):
@@ -90,6 +93,10 @@ class ParserState:
     def value(self):
         return self._tx.value
 
+    @property
+    def scope(self):
+        return self.__scope
+
     @value.setter
     def value(self, value):
         self._tx.value = value
@@ -114,6 +121,14 @@ class ParserState:
     def uncommit(self):
         self._tx.commit = False
 
+    @contextlib.contextmanager
+    def open_scope(self):
+        previous_scope = self.__scope
+        self.__scope = locals.LocalScope()
+        yield self.__scope
+        self.__scope = previous_scope
+
+    # TODO: Move this to a function similar to open_scope().
     def __enter__(self):
         pos = self.__input.tell()
         self.__txs.append(self.__Tx(pos))
@@ -423,6 +438,7 @@ class Symbols(Parser):
 
 
 def directive_class(unary_parser):
+
     class Directive:
 
         __parser_type__ = unary_parser
