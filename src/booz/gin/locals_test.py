@@ -112,5 +112,17 @@ class LTestCase(unittest.TestCase):
         self.assertEqual(10, action.value)
 
 
+class ScopeTest(unittest.TestCase):
+
+    def test_iter_empty(self):
+        self.assertEqual((), tuple(iter(locals.LocalScope())))
+
+    def test_iter_values(self):
+        scope = locals.LocalScope()
+        scope.a = 10
+        scope.b = 20
+        self.assertSequenceEqual((('a', 10), ('b', 20)), tuple(iter(scope)))
+
+
 if __name__ == '__main__':
     unittest.main()

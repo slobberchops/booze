@@ -61,3 +61,11 @@ class l:
 
     def __getattr__(self, name):
         return GetAttr(name)
+
+
+class LocalScope:
+
+    def __iter__(self):
+        for name in dir(self):
+            if not (name.startswith('__') or name.startswith('_LocalScope')):
+                yield name, getattr(self, name)
