@@ -14,10 +14,10 @@
 
 import unittest
 
-import booz.gin
-from booz import whiskey
-from booz.gin import parser
-from booz.gin import rule
+import booze.gin
+from booze import whiskey
+from booze.gin import parser
+from booze.gin import rule
 
 
 class RuleTestCase(unittest.TestCase):

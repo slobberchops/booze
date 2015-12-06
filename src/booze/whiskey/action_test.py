@@ -15,7 +15,7 @@
 import operator
 import unittest
 
-from booz.whiskey import action
+from booze.whiskey import action
 
 
 class MyFuncAction(action.Action):

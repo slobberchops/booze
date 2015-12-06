@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from booz.gin import *
-from booz.whiskey import *
+from booze.gin import *
+from booze.whiskey import *
 
 @func
 def xml_doc(name, children=()):

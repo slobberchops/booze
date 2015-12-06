@@ -14,9 +14,9 @@
 
 import unittest
 
-from booz import whiskey
-from booz.gin import local_vars
-from booz.whiskey import action
+from booze import whiskey
+from booze.gin import local_vars
+from booze.whiskey import action
 
 
 class MyNameAction(action.Action):

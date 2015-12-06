@@ -16,9 +16,9 @@ import contextlib
 import io
 import unittest
 
-from booz import whiskey
-from booz.gin import local_vars
-from booz.gin import parser
+from booze import whiskey
+from booze.gin import local_vars
+from booze.gin import parser
 
 
 class TestAction(whiskey.Action):

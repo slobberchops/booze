@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from booz.gin.aux import *
-from booz.gin.chars import *
-from booz.gin.local_vars import *
-from booz.gin.parser import *
-from booz.gin.rule import *
+from booze.gin.aux import *
+from booze.gin.chars import *
+from booze.gin.local_vars import *
+from booze.gin.parser import *
+from booze.gin.rule import *

@@ -15,8 +15,8 @@
 import io
 import unittest
 
-from booz.gin import chars
-from booz.gin import parser
+from booze.gin import chars
+from booze.gin import parser
 
 
 class PredicateCharTestCase(unittest.TestCase):

@@ -15,8 +15,8 @@
 import io
 import unittest
 
-from booz.gin import aux
-from booz.gin import parser
+from booze.gin import aux
+from booze.gin import parser
 
 
 class AttrTestCase(unittest.TestCase):
