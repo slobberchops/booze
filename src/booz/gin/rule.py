@@ -53,18 +53,14 @@ class Rule(parser.Parser):
         return RuleCall(self, *args, **kwargs)
 
 
-class RuleCall(parser.Parser):
+class RuleCall(parser.Unary):
 
     def __init__(self, rule, *args, **kwargs):
         if not isinstance(rule, Rule):
             raise TypeError('Expected rule to be type Rule, was {}'.format(type(rule).__name__))
-        self.__rule = rule
+        super(RuleCall, self).__init__(rule)
         self.__args = args
         self.__kwargs = kwargs
-
-    @property
-    def rule(self):
-        return self.__rule
 
     @property
     def args(self):
@@ -75,4 +71,6 @@ class RuleCall(parser.Parser):
         return dict(self.__kwargs)
 
     def _parse(self, state):
-        self.__rule._parse(state, *self.__args, **self.__kwargs)
+        args = [state.invoke(a) for a in self.__args]
+        kwargs = {k: state.invoke(v) for k, v in self.__kwargs.items()}
+        self.parser._parse(state, *args, **kwargs)

@@ -15,6 +15,7 @@
 import unittest
 
 import booz.gin
+from booz import whiskey
 from booz.gin import parser
 from booz.gin import rule
 
@@ -91,6 +92,16 @@ class RuleCallTestCase(unittest.TestCase):
 
         self.rule %= parser.Char('a')[check_state]
         self.assertEqual((True, 'called - a'), self.rule_call.parse(parser_state))
+
+    def test_parse_action_arg(self):
+        self.rule %= parser.String(whiskey.p[0])
+        abc = self.rule('a') << self.rule('b') << self.rule('c')
+        self.assertEqual((True, ('a', 'b', 'c')), abc.parse('abcd'))
+
+    def test_parse_action_kwarg(self):
+        self.rule %= parser.String(whiskey.p.a)
+        abc = self.rule(a='a') << self.rule(a='b') << self.rule(a='c')
+        self.assertEqual((True, ('a', 'b', 'c')), abc.parse('abcd'))
 
     def test_wrong_rule_type(self):
         with self.assertRaisesRegex(TypeError, 'Expected rule to be type Rule, was Char'):
