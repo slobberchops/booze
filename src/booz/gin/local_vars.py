@@ -26,9 +26,9 @@ class GetAttr(whiskey.Action):
         return self.__name
 
     def invoke(self, *args, vars=None, **kwargs):
-        if locals is None:
-            raise TypeError('Must provide \'locals\' parameter')
-        return getattr(locals, whiskey.invoke(self.__name, *args, locals=locals, **kwargs))
+        if vars is None:
+            raise TypeError('Must provide \'vars\' parameter')
+        return getattr(vars, whiskey.invoke(self.__name, *args, locals=locals, **kwargs))
 
     def __getitem__(self, value):
         return SetAttr(self.__name, value)
@@ -49,10 +49,10 @@ class SetAttr(whiskey.Action):
         return self.__value
 
     def invoke(self, *args, vars=None, **kwargs):
-        if locals is None:
-            raise TypeError('Must provide \'locals\' parameter')
-        value = whiskey.invoke(self.__value)
-        setattr(locals, whiskey.invoke(self.__name), value)
+        if vars is None:
+            raise TypeError('Must provide \'vars\' parameter')
+        value = whiskey.invoke(self.__value, *args, **kwargs)
+        setattr(vars, whiskey.invoke(self.__name, *args, **kwargs), value)
         return value
 
 

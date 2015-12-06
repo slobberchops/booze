@@ -14,6 +14,7 @@
 
 import unittest
 
+from booz import whiskey
 from booz.gin import local_vars
 from booz.whiskey import action
 
@@ -43,14 +44,14 @@ class GetAttrTestCase(unittest.TestCase):
 
     def test_invoke_not_found(self):
         with self.assertRaises(AttributeError):
-            self.action.invoke(1, 2, 3, a='a', b='b', c='c', locals=object())
+            self.action.invoke(1, 2, 3, a='a', b='b', c='c', vars=object())
 
     def test_invoke(self):
         class SimpleLocals:
             pass
         locals_instance = SimpleLocals()
         locals_instance.my_name = 10
-        self.assertEqual(10, self.action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
+        self.assertEqual(10, self.action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
 
     def test_invoke_name_action(self):
         name_action = MyNameAction()
@@ -59,7 +60,7 @@ class GetAttrTestCase(unittest.TestCase):
             pass
         locals_instance = SimpleLocals()
         locals_instance.my_name = 10
-        self.assertEqual(10, test_action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
+        self.assertEqual(10, test_action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
 
 
 class SetAttrTestCase(unittest.TestCase):
@@ -78,24 +79,40 @@ class SetAttrTestCase(unittest.TestCase):
 
     def test_invoke_not_found(self):
         with self.assertRaises(AttributeError):
-            self.action.invoke(1, 2, 3, a='a', b='b', c='c', locals=object())
+            self.action.invoke(1, 2, 3, a='a', b='b', c='c', vars=object())
 
     def test_invoke(self):
         class SimpleLocals:
             pass
         locals_instance = SimpleLocals()
-        self.assertEqual(10, self.action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
+        self.assertEqual(10, self.action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
         self.assertEqual(10, locals_instance.my_name)
 
-    def test_invoke_name_and_value_action(self):
-        name_action = MyNameAction()
-        value_action = MyValueAction()
-        test_action = local_vars.SetAttr(name_action, value_action)
+    def test_invoke_name_action(self):
         class SimpleLocals:
             pass
         locals_instance = SimpleLocals()
-        self.assertEqual(10, test_action.invoke(1, 2, 3, a='a', b='b', c='c', locals=locals_instance))
-        self.assertEqual(10, locals_instance.my_name)
+
+        test_action = local_vars.SetAttr(whiskey.p[0], 10)
+        self.assertEqual(10, test_action.invoke('one', 2, 3, a='a', b='b', c='c', vars=locals_instance))
+        self.assertEqual(10, locals_instance.one)
+
+        test_action = local_vars.SetAttr(whiskey.p.a, 20)
+        self.assertEqual(20, test_action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
+        self.assertEqual(20, locals_instance.a)
+
+    def test_invoke_value_action(self):
+        class SimpleLocals:
+            pass
+        locals_instance = SimpleLocals()
+
+        test_action = local_vars.SetAttr('my_name', whiskey.p[0])
+        self.assertEqual(1, test_action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
+        self.assertEqual(1, locals_instance.my_name)
+
+        test_action = local_vars.SetAttr('my_name', whiskey.p.a)
+        self.assertEqual('a', test_action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
+        self.assertEqual('a', locals_instance.my_name)
 
 
 class LTestCase(unittest.TestCase):
