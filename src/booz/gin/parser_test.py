@@ -160,7 +160,7 @@ class ParserStateTestCase(unittest.TestCase):
         a = TestAction()
         self.assertEqual('invoked', self.state.invoke(a))
         self.assertSequenceEqual((), a.args)
-        self.assertDictEqual({}, a.kwargs)
+        self.assertDictEqual({'vars': local_vars.Vars()}, a.kwargs)
 
     def test_invoke_scope(self):
         with self.state.open_scope(1, 2, 3, a='a', b='b', c='c'):
@@ -170,7 +170,7 @@ class ParserStateTestCase(unittest.TestCase):
             a = TestAction()
             self.assertEqual('invoked', self.state.invoke(a))
             self.assertSequenceEqual((1, 2, 3), a.args)
-            self.assertDictEqual({'a': 'a', 'b': 'b', 'c': 'c'}, a.kwargs)
+            self.assertDictEqual({'a': 'a', 'b': 'b', 'c': 'c', 'vars': local_vars.Vars()}, a.kwargs)
 
     def test_scope(self):
         self.assertIsNone(self.state.scope)

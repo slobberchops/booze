@@ -149,7 +149,8 @@ class ParserState:
         scope = self.__scope
         args = scope.args if scope else ()
         kwargs = scope.kwargs if scope else {}
-        return whiskey.invoke(value, *args, **kwargs)
+        vars = scope.vars if scope else local_vars.Vars()
+        return whiskey.invoke(value, *args, vars=vars, **kwargs)
 
 
 class AttrType(enum.Enum):

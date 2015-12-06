@@ -148,6 +148,7 @@ class VarsTestCase(unittest.TestCase):
         self.assertEqual(local_vars.Vars(), local_vars.Vars())
         self.assertEqual(local_vars.Vars(a='a', b='b', c='c'), local_vars.Vars(a='a', b='b', c='c'))
         self.assertNotEqual(local_vars.Vars(a='a', b='b', c='c'), local_vars.Vars(a=1, b='b', c='c'))
+        self.assertNotEqual({'a': 'a', 'b': 'b', 'c': 'c'}, local_vars.Vars(a='a', b='b', c='c'))
 
     def test_str(self):
         self.assertEqual('<Vars>', str(local_vars.Vars()))
