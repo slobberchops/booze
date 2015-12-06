@@ -63,11 +63,16 @@ class l:
         return GetAttr(name)
 
 
+class Vars:
+    pass
+
+
 class LocalScope:
 
     def __init__(self, *args, **kwargs):
         self.__args = args
         self.__kwargs = kwargs
+        self.__vars = Vars()
 
     @property
     def args(self):
@@ -76,3 +81,7 @@ class LocalScope:
     @property
     def kwargs(self):
         return dict(self.__kwargs)
+
+    @property
+    def vars(self):
+        return dict(self.__vars)

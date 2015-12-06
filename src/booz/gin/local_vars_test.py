@@ -127,6 +127,10 @@ class LocalScopeTest(unittest.TestCase):
         scope.kwargs['a'] = 'aa'
         self.assertDictEqual({'a': 'a', 'b': 'b', 'c': 'c'}, scope.kwargs)
 
+    def test_vars(self):
+        scope = local_vars.LocalScope()
+        self.assertIsInstance(scope.vars, local_vars.Vars)
+
 
 if __name__ == '__main__':
     unittest.main()
