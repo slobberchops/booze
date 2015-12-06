@@ -31,9 +31,9 @@ class MyValueAction(action.Action):
         return 10
 
 
-class GetAttrTestCase(unittest.TestCase):
+class GetVarAttrTestCase(unittest.TestCase):
 
-    action = local_vars.GetAttr('my_name')
+    action = local_vars.GetVarAttr('my_name')
 
     def test_name(self):
         self.assertEqual('my_name', self.action.name)
@@ -55,7 +55,7 @@ class GetAttrTestCase(unittest.TestCase):
 
     def test_invoke_name_action(self):
         name_action = MyNameAction()
-        test_action = local_vars.GetAttr(name_action)
+        test_action = local_vars.GetVarAttr(name_action)
         class SimpleLocals:
             pass
         locals_instance = SimpleLocals()
@@ -63,9 +63,9 @@ class GetAttrTestCase(unittest.TestCase):
         self.assertEqual(10, test_action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
 
 
-class SetAttrTestCase(unittest.TestCase):
+class SetVarAttrTestCase(unittest.TestCase):
 
-    action = local_vars.SetAttr('my_name', 10)
+    action = local_vars.SetVarAttr('my_name', 10)
 
     def test_name(self):
         self.assertEqual('my_name', self.action.name)
@@ -93,11 +93,11 @@ class SetAttrTestCase(unittest.TestCase):
             pass
         locals_instance = SimpleLocals()
 
-        test_action = local_vars.SetAttr(whiskey.p[0], 10)
+        test_action = local_vars.SetVarAttr(whiskey.p[0], 10)
         self.assertEqual(10, test_action.invoke('one', 2, 3, a='a', b='b', c='c', vars=locals_instance))
         self.assertEqual(10, locals_instance.one)
 
-        test_action = local_vars.SetAttr(whiskey.p.a, 20)
+        test_action = local_vars.SetVarAttr(whiskey.p.a, 20)
         self.assertEqual(20, test_action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
         self.assertEqual(20, locals_instance.a)
 
@@ -106,11 +106,11 @@ class SetAttrTestCase(unittest.TestCase):
             pass
         locals_instance = SimpleLocals()
 
-        test_action = local_vars.SetAttr('my_name', whiskey.p[0])
+        test_action = local_vars.SetVarAttr('my_name', whiskey.p[0])
         self.assertEqual(1, test_action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
         self.assertEqual(1, locals_instance.my_name)
 
-        test_action = local_vars.SetAttr('my_name', whiskey.p.a)
+        test_action = local_vars.SetVarAttr('my_name', whiskey.p.a)
         self.assertEqual('a', test_action.invoke(1, 2, 3, a='a', b='b', c='c', vars=locals_instance))
         self.assertEqual('a', locals_instance.my_name)
 
@@ -119,12 +119,12 @@ class LTestCase(unittest.TestCase):
 
     def test_get_attr(self):
         action = local_vars.l.my_name
-        self.assertIsInstance(action, local_vars.GetAttr)
+        self.assertIsInstance(action, local_vars.GetVarAttr)
         self.assertEqual('my_name', action.name)
 
     def test_set_attr(self):
         action = local_vars.l.my_name[10]
-        self.assertIsInstance(action, local_vars.SetAttr)
+        self.assertIsInstance(action, local_vars.SetVarAttr)
         self.assertEqual('my_name', action.name)
         self.assertEqual(10, action.value)
 

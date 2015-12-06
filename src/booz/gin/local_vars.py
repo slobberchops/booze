@@ -16,7 +16,7 @@ from .. import util
 from .. import whiskey
 
 
-class GetAttr(whiskey.Action):
+class GetVarAttr(whiskey.Action):
 
     def __init__(self, name):
         self.__name = name
@@ -31,10 +31,10 @@ class GetAttr(whiskey.Action):
         return getattr(vars, whiskey.invoke(self.__name, *args, locals=locals, **kwargs))
 
     def __getitem__(self, value):
-        return SetAttr(self.__name, value)
+        return SetVarAttr(self.__name, value)
 
 
-class SetAttr(whiskey.Action):
+class SetVarAttr(whiskey.Action):
 
     def __init__(self, name, value):
         self.__name = name
@@ -60,7 +60,7 @@ class SetAttr(whiskey.Action):
 class l:
 
     def __getattr__(self, name):
-        return GetAttr(name)
+        return GetVarAttr(name)
 
 
 class Vars:
