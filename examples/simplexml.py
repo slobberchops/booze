@@ -22,12 +22,17 @@ def xml_doc(name, children=()):
 
 start_tag = Rule()
 end_tag = Rule()
+empty_tag = Rule()
 xml = Rule()
 document = Rule(AttrType.OBJECT)
 
-start_tag %= '<' << lexeme[+alpha] << '>'
+tag_name = lexeme[+alpha]
+
+start_tag %= '<' << tag_name << '>'
 end_tag   %= '</' << String(p[0]) << '>'
-xml       %= (start_tag[l.name[p[0]]] << -+xml << end_tag(l.name))  [xml_doc(p[0], p[1])]
+empty_tag %= '<' << tag_name << '/>'
+xml       %= ((start_tag[l.name[p[0]]] << -+xml << end_tag(l.name))  [xml_doc(p[0], p[1])]
+           | empty_tag                                               [xml_doc(p[0])])
 document  %= xml;
 
 if __name__ == '__main__':
@@ -46,8 +51,8 @@ if __name__ == '__main__':
             </document>""")
     print_xml("""
             <document>
-                <a></a>
+                <a/>
                 <b>
-                    <c></c>
+                    <c/>
                 </b>
             </document>""")
