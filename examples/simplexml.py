@@ -33,12 +33,12 @@ end_tag   %= omit['</' << String(p[0]) << '>']
 empty_tag %= '<' << tag_name << '/>'
 xml       %= ((start_tag[l.name[p[0]]] << -+xml << end_tag(l.name))  [xml_doc(p[0], p[1])]
            | empty_tag                                               [xml_doc(p[0])])
-document  %= xml;
+document  %= xml << eoi
 
 if __name__ == '__main__':
     import io
 
-    def print_xml(unparsed_string, xml_parser=xml):
+    def print_xml(unparsed_string, xml_parser=document):
         s = io.StringIO(unparsed_string)
         print(unparsed_string, '=', xml_parser.parse(s, ' \n')[1])
         remaining = s.read()
@@ -52,4 +52,5 @@ if __name__ == '__main__':
                 <b>
                     <c/>
                 </b>
-            </document>""")
+            </document>
+            """)
