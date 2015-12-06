@@ -141,6 +141,12 @@ class ParserState:
                 self.__input.seek(self._tx.pos)
             self.__tx = tx
 
+    def invoke(self, value):
+        scope = self.__scope
+        args = scope.args if scope else ()
+        kwargs = scope.kwargs if scope else {}
+        return whiskey.invoke(value, *args, **kwargs)
+
 
 class AttrType(enum.Enum):
 

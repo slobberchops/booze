@@ -21,6 +21,17 @@ from booz.gin import local_vars
 from booz.gin import parser
 
 
+class TestAction(whiskey.Action):
+
+    args = ()
+    kwargs = {}
+
+    def invoke(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        return 'invoked'
+
+
 class UnusedTestCase(unittest.TestCase):
 
     def test_repr(self):
@@ -133,6 +144,25 @@ class ParserStateTestCase(unittest.TestCase):
     def test_bad_skipper(self):
         with self.assertRaises(TypeError):
             parser.ParserState(' ', object())
+
+    def test_invoke_without_scope(self):
+        self.assertEqual(10, self.state.invoke(10))
+        l = lambda *args, **kwargs: (args, kwargs)
+        self.assertEqual(l, self.state.invoke(l))
+        a = TestAction()
+        self.assertEqual('invoked', self.state.invoke(a))
+        self.assertSequenceEqual((), a.args)
+        self.assertDictEqual({}, a.kwargs)
+
+    def test_invoke_scope(self):
+        with self.state.open_scope(1, 2, 3, a='a', b='b', c='c'):
+            self.assertEqual(10, self.state.invoke(10))
+            l = lambda *args, **kwargs: (args, kwargs)
+            self.assertEqual(l, self.state.invoke(l))
+            a = TestAction()
+            self.assertEqual('invoked', self.state.invoke(a))
+            self.assertSequenceEqual((1, 2, 3), a.args)
+            self.assertDictEqual({'a': 'a', 'b': 'b', 'c': 'c'}, a.kwargs)
 
     def test_scope(self):
         self.assertIsNone(self.state.scope)
