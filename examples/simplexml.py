@@ -20,16 +20,16 @@ def xml_doc(name, children=()):
     return (name, children) if children else (name,)
 
 
-start_tag = Rule()
-end_tag = Rule()
-empty_tag = Rule()
+start_tag = Rule(AttrType.STRING)
+end_tag = Rule(AttrType.UNUSED)
+empty_tag = Rule(AttrType.STRING)
 xml = Rule()
 document = Rule(AttrType.OBJECT)
 
 tag_name = lexeme[+alpha]
 
 start_tag %= '<' << tag_name << '>'
-end_tag   %= '</' << String(p[0]) << '>'
+end_tag   %= omit['</' << String(p[0]) << '>']
 empty_tag %= '<' << tag_name << '/>'
 xml       %= ((start_tag[l.name[p[0]]] << -+xml << end_tag(l.name))  [xml_doc(p[0], p[1])]
            | empty_tag                                               [xml_doc(p[0])])
@@ -46,9 +46,6 @@ if __name__ == '__main__':
             print('Parse Error: "{}"'.format(remaining))
 
     print_xml('<document></document>')
-    print_xml("""
-            <document>
-            </document>""")
     print_xml("""
             <document>
                 <a/>
