@@ -25,7 +25,7 @@ class GetAttr(whiskey.Action):
     def name(self):
         return self.__name
 
-    def invoke(self, *args, locals=None, **kwargs):
+    def invoke(self, *args, vars=None, **kwargs):
         if locals is None:
             raise TypeError('Must provide \'locals\' parameter')
         return getattr(locals, whiskey.invoke(self.__name, *args, locals=locals, **kwargs))
@@ -48,7 +48,7 @@ class SetAttr(whiskey.Action):
     def value(self):
         return self.__value
 
-    def invoke(self, *args, locals = None, **kwargs):
+    def invoke(self, *args, vars=None, **kwargs):
         if locals is None:
             raise TypeError('Must provide \'locals\' parameter')
         value = whiskey.invoke(self.__value)

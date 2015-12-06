@@ -556,6 +556,28 @@ class SemanticActionTestCase(unittest.TestCase):
         self.assertEqual((True, 'bb'), p.parse(s))
         self.assertEqual(1, s.tell())
 
+    def test_parse_with_scope_no_vars(self):
+        s = parser.ParserState('b')
+        with s.open_scope():
+            p = parser.SemanticAction(parser.Char('abc'), lambda v: v + v)
+            self.assertEqual((True, "bb"), p.parse(s))
+            self.assertEqual(1, s.input.tell())
+
+    def test_parse_with_scope(self):
+        s = parser.ParserState('b')
+        with s.open_scope():
+            p = parser.SemanticAction(parser.Char('abc'), lambda v, vars: str((v, str(vars))))
+            self.assertEqual((True, "('b', '<Vars>')"), p.parse(s))
+            self.assertEqual(1, s.input.tell())
+
+    def test_parse_with_scope_with_value(self):
+        s = parser.ParserState('b')
+        with s.open_scope():
+            s.scope.vars.a = 10
+            p = parser.SemanticAction(parser.Char('abc'), lambda v, vars: str((v, str(vars), vars.a)))
+            self.assertEqual((True, "('b', '<Vars a>', 10)"), p.parse(s))
+            self.assertEqual(1, s.input.tell())
+
     def test_parse_whiskey_action(self):
         class Action(whiskey.Action):
             args = None

@@ -271,7 +271,7 @@ class Char(Parser):
         if c != '':
             local_chars = state.invoke(self.__chars)
             if local_chars is not None and not isinstance(local_chars, set):
-                local_cahrs = set(local_chars)
+                local_chars = set(local_chars)
             if local_chars is None or c in local_chars:
                 state.commit(c)
 
@@ -415,10 +415,25 @@ class SemanticAction(Unary):
                 params = ()
             else:
                 params = state.value if isinstance(state.value, tuple) else (state.value,)
+
+
             if isinstance(self.__func, whiskey.Action):
-                state.value = self.__func.invoke(*params)
+                func = self.__func.invoke
             else:
-                state.value = self.__func(*params)
+                func = self.__func
+
+            sig = inspect.signature(func)
+            binding = None
+            if state.scope:
+                try:
+                    binding = sig.bind(*params, vars=state.scope.vars)
+                except TypeError:
+                    pass
+
+            if not binding:
+                binding = sig.bind(*params)
+
+            state.value = func(*binding.args, **binding.kwargs)
 
 
 class Symbols(Parser):
