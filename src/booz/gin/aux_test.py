@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 import unittest
 
 from booz.gin import aux
@@ -59,6 +60,11 @@ class EoiTest(unittest.TestCase):
 
     def test_parse(self):
         self.assertEqual((True, parser.UNUSED), aux.eoi.parse(''))
+
+    def test_parse_with_end_space(self):
+        s = io.StringIO(' ')
+        self.assertEqual((True, parser.UNUSED), aux.eoi.parse(s, skipper=parser.Char(' ')))
+        self.assertEqual('', s.read())
 
     def test_parse_fail(self):
         self.assertEqual((False, None), aux.eoi.parse('anything'))

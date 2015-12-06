@@ -56,7 +56,7 @@ class eoi(parser.Parser):
 
     def _parse(self, state):
         if state.read(1) == '':
-            state.succeed()
+            state.commit()
 
 
 @util.singleton
