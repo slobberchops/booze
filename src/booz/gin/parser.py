@@ -328,6 +328,7 @@ class Seq(AggregateParser):
     def _parse(self, state):
         values = []
         for parser in self.parsers:
+            # TODO: Each value can be an action.
             result, value = parser.parse(state)
             if not result:
                 return
@@ -361,6 +362,7 @@ class Alt(AggregateParser):
 
     def _parse(self, state):
         for parser in self.parsers:
+            # TODO: Each value can be an action.
             result, value = parser.parse(state)
             if result:
                 state.commit(value)
