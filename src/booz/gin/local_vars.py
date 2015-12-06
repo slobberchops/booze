@@ -64,7 +64,38 @@ class l:
 
 
 class Vars:
-    pass
+
+    def __init__(self, **kwargs):
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            raise ValueError('Invalid variable name "{}"'.format(name))
+        self.__dict__[name] = value
+
+    def __dir__(self):
+        result = []
+        for name in sorted(self.__dict__.keys()):
+            if not name.startswith('_') or name:
+                result.append(name)
+        return result
+
+    def __iter__(self):
+        for name in dir(self):
+            yield name, getattr(self, name)
+
+    def __eq__(self, other):
+        if not isinstance(other, Vars):
+            return NotImplemented
+        else:
+            return list(self) == list(other)
+
+    def __str__(self):
+        vars = ', '.join(dir(self))
+        return '<Vars {}>'.format(vars) if vars else '<Vars>'
+
+    __repr__ = __str__
 
 
 class LocalScope:
@@ -84,4 +115,4 @@ class LocalScope:
 
     @property
     def vars(self):
-        return dict(self.__vars)
+        return self.__vars

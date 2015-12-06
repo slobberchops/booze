@@ -112,6 +112,52 @@ class LTestCase(unittest.TestCase):
         self.assertEqual(10, action.value)
 
 
+class VarsTestCase(unittest.TestCase):
+
+    def test_init(self):
+        vars = local_vars.Vars(a='a', b='b', c='c')
+        self.assertEqual('a', vars.a)
+        self.assertEqual('b', vars.b)
+        self.assertEqual('c', vars.c)
+
+    def test_init_invalid(self):
+        with self.assertRaises(ValueError):
+            local_vars.Vars(_a='a')
+
+    def test_setattr(self):
+        vars = local_vars.Vars()
+        vars.a = 'a'
+        vars.b = 'b'
+        vars.c = 'c'
+        self.assertEqual('a', vars.a)
+        self.assertEqual('b', vars.b)
+        self.assertEqual('c', vars.c)
+
+    def test_setattr_invalid(self):
+        vars = local_vars.Vars()
+        with self.assertRaises(ValueError):
+            vars._a = 'a'
+
+    def test_dir(self):
+        self.assertListEqual(['a', 'b', 'c'], dir(local_vars.Vars(a='a', b='b', c='c')))
+
+    def test_iter(self):
+        self.assertListEqual([('a', 1), ('b', 2), ('c', 3)], list(local_vars.Vars(a=1, b=2, c=3)))
+
+    def test_eq(self):
+        self.assertEqual(local_vars.Vars(), local_vars.Vars())
+        self.assertEqual(local_vars.Vars(a='a', b='b', c='c'), local_vars.Vars(a='a', b='b', c='c'))
+        self.assertNotEqual(local_vars.Vars(a='a', b='b', c='c'), local_vars.Vars(a=1, b='b', c='c'))
+
+    def test_str(self):
+        self.assertEqual('<Vars>', str(local_vars.Vars()))
+        self.assertEqual('<Vars a, b, c>', str(local_vars.Vars(a='a', b='b', c='c')))
+
+    def test_repr(self):
+        self.assertEqual('<Vars>', repr(local_vars.Vars()))
+        self.assertEqual('<Vars a, b, c>', repr(local_vars.Vars(a='a', b='b', c='c')))
+
+
 class LocalScopeTest(unittest.TestCase):
 
     def test_args(self):
