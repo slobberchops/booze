@@ -65,6 +65,10 @@ class ParserState:
         self.__scope = None
 
     @property
+    def input(self):
+        return self.__input
+
+    @property
     def skipper(self):
         return self.__skipper
 
@@ -246,7 +250,12 @@ class Parser:
 class Char(Parser):
 
     def __init__(self, chars=None):
-        self.__chars = None if chars is None else set(chars)
+        if chars is None:
+            self.__chars = None
+        elif isinstance(chars, whiskey.Action):
+            self.__chars = chars
+        else:
+            self.__chars = set(chars)
 
     @property
     def attr_type(self):
@@ -259,7 +268,9 @@ class Char(Parser):
     def _parse(self, state):
         c = state.read(1)
         if c != '':
-            local_chars = self.__chars
+            local_chars = state.invoke(self.__chars)
+            if local_chars is not None and not isinstance(local_chars, set):
+                local_cahrs = set(local_chars)
             if local_chars is None or c in local_chars:
                 state.commit(c)
 
@@ -278,8 +289,9 @@ class String(Parser):
         return self.__string
 
     def _parse(self, state):
-        string = state.read(len(self.__string))
-        if string == self.__string:
+        value = state.invoke(self.__string)
+        string = state.read(len(value))
+        if string == value:
             state.commit(string)
 
 

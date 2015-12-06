@@ -68,6 +68,14 @@ class ParserStateTestCase(unittest.TestCase):
         self.input = io.StringIO('abc')
         self.state = parser.ParserState(self.input)
 
+    def test_input(self):
+        i = io.StringIO()
+        s = parser.ParserState(i)
+        self.assertIs(i, s.input)
+        s = parser.ParserState('astring')
+        self.assertIsInstance(s.input, io.StringIO)
+        self.assertEqual('astring', s.input.getvalue())
+
     def test_initial_state(self):
         with self.assertRaises(AttributeError):
             self.state.committed
@@ -335,9 +343,21 @@ class CharTestCase(unittest.TestCase):
         self.assertEqual((False, None), p.parse(s))
         self.assertEqual(4, s.tell())
 
+    def test_parse_action(self):
+        p = parser.Char(whiskey.p[0])
+        s = parser.ParserState('abcd')
+        with s.open_scope('abc'):
+            self.assertEqual((True, 'a'), p.parse(s))
+            self.assertEqual((True, 'b'), p.parse(s))
+            self.assertEqual((True, 'c'), p.parse(s))
+            self.assertEqual((False, None), p.parse(s))
+            self.assertEqual(3, s.input.tell())
+
     def test_chars(self):
         self.assertEqual({'a', 'b', 'c'}, parser.Char('abc').chars)
         self.assertEqual(None, parser.Char().chars)
+        a = TestAction()
+        self.assertEqual(a, parser.Char(a).chars)
 
 
 class StringTestCase(unittest.TestCase):
@@ -349,6 +369,15 @@ class StringTestCase(unittest.TestCase):
         self.assertEqual(3, s.tell())
         self.assertEqual((False, None), p.parse(s))
         self.assertEqual(3, s.tell())
+
+    def test_parse_action(self):
+        p = parser.String(whiskey.p[0])
+        s = parser.ParserState('abcdef')
+        with s.open_scope('abc'):
+            self.assertEqual((True, 'abc'), p.parse(s))
+            self.assertEqual(3, s.input.tell())
+            self.assertEqual((False, None), p.parse(s))
+            self.assertEqual(3, s.input.tell())
 
     def test_string(self):
         self.assertEqual('abc', parser.String('abc').string)
