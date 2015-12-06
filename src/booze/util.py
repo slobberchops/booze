@@ -16,10 +16,60 @@ import functools
 
 
 def singleton(cls):
+    """Define a singleton class.
+
+    A singleton class has only one instance.
+
+    Example:
+
+        @singleton
+        class my_singleton:
+
+            __counter = 0
+
+            def inc(self):
+                self.__counter += 1
+                return self.__counter
+
+        assert my_singleton.inc() == 1
+        assert my_singleton.inc() == 2
+
+    Args:
+        cls: Class for which there will be only one instance.
+
+    Returns:
+        Singleton class instance.
+    """
     return cls()
 
 
 def calculated_property(method):
+    """Define a cached, read-only, calculated property.
+
+    Example:
+
+        class MyClass:
+
+            call_count = 0
+
+            @calculated_property
+            def calc_property(self):
+                self.call_count += 1
+                return 10
+
+        instance = MyClass()
+        assert instance.calc_property == 10
+        assert instance.call_count == 1
+        assert instance.calc_property == 10
+        assert instance.call_count == 1
+
+
+    Args:
+        method: Method definging calculated property.
+
+    Returns:
+        Calculated property with built in caching so that calculation only occurs once per instance.
+    """
     cached_value_name = '_cached_' + method.__name__
 
     @property
